@@ -8,37 +8,37 @@ DeepPhotos is designed to provide a fast and simple way to upload, organize, bro
 
 ## 🚧 Project Status
 
-> **Current Phase: 🏗️ Foundation & Setup**
+> **Current Phase: 🏗️ Foundation & Svelte 5 UI Active**
 >
-> DeepPhotos is actively under development. The frontend is built on **SvelteKit** (Svelte 5 + Vite), and the backend is being architected with **Go**, **SQLite**, and **MinIO**.
+> DeepPhotos is actively under development. The frontend is fully built on **SvelteKit** (Svelte 5 Runes + Vite + Tailwind CSS), and the backend is being architected with **Go**, **SQLite**, and **MinIO**.
 
 ---
 
 ## ✨ Features & Capabilities
 
-### 📸 Photo Management
-* **Timeline Browsing**: View photos chronologically in an interactive grid.
-* **Full-Screen Viewer**: High-resolution viewer with metadata overlay.
-* **Upload & Download**: Fast photo ingestion and original photo retrieval.
-* **Photo Organization**: Mark favorites, delete to trash, and restore photos.
+### 📸 Photo Management & Viewer
+* **Timeline Grid**: View photos chronologically in a responsive, clean grid layout.
+* **Next & Previous Lightbox Viewer**: High-resolution viewer with **Previous (⬅️)** and **Next (➡️)** navigation controls, image counter, and keyboard shortcuts (`←`, `→`, `Esc`).
+* **Favorites & Filtering**: Quickly filter photos by favorites or all media.
+* **Original Retrieval**: High-res original photo downloads.
 
-### 📁 Albums & Collections
-* Create and manage custom photo albums.
-* Organize photos into multiple collections.
+### 📁 Albums, Vault & Organization
+* **Albums**: Create and manage custom photo collections.
+* **Memories**: Rediscover special highlights and travel memories.
+* **Locked Vault**: Passcode-protected (AES-256 encrypted) folder for sensitive items.
+* **Documents & Scans**: Dedicated document storage for scans and PDFs.
+* **Bin / Trash**: Deleted media recovery and storage purging.
+
+### 👤 User Management & Security Audit
+* **Top-Right Profile Avatar**: Compact header avatar linking to user profile & settings.
+* **Admin User Control**: Add new user accounts with assigned roles (*Administrator*, *Editor*, *Viewer*) or remove accounts.
+* **Login History Audit Logs**: Detailed audit log tracking authentication attempts, IP addresses, client devices, and timestamps.
+* **Light & Dark Theme Switcher**: Toggle seamlessly between Light Sky/Cloud mode and Minimal Charcoal Dark mode.
 
 ### 🖼️ Optimized Media Pipeline
-* **Asynchronous Thumbnails**: Background worker generates WebP thumbnails to keep UI fast.
+* **Asynchronous WebP Thumbnails**: Background worker generates WebP thumbnails to keep the gallery UI fast.
 * **Original Storage**: High-res originals stored safely in MinIO object storage.
-* **Metadata Extraction**: EXIF data parsing (dimensions, timestamps, camera metadata, GPS).
-
-### 🔍 Search & Filtering
-* Instant search by filename, date, and EXIF tags.
-* *Planned*: AI-powered semantic search and tag indexing.
-
-### ⚡ Performance & Self-Hosting
-* **Lightweight Frontend**: Fluid Svelte 5 single-page application experience.
-* **Low Footprint Backend**: High-performance Go microservice with low memory usage.
-* **Smart Storage**: SQLite for metadata & MinIO for media objects.
+* **Decoupled Storage**: Metadata stored in SQLite (`photos.db`), files stored in MinIO.
 
 ---
 
@@ -49,8 +49,8 @@ DeepPhotos is designed to provide a fast and simple way to upload, organize, bro
                     │  SvelteKit Frontend  │
                     │      (Svelte 5)      │
                     │                      │
-                    │  Photos  │  Albums   │
-                    │  Search  │  Viewer   │
+                    │  Gallery │  Albums   │
+                    │  Viewer  │  Profile  │
                     └──────────┬───────────┘
                                │
                                │ REST API
@@ -60,7 +60,7 @@ DeepPhotos is designed to provide a fast and simple way to upload, organize, bro
                     │                      │
                     │ Authentication       │
                     │ Photo Management     │
-                    │ Album Management     │
+                    │ User & Audit Logs    │
                     │ Search & Metadata    │
                     │ Thumbnail Processing │
                     └───────┬───────┬──────┘
@@ -82,8 +82,8 @@ DeepPhotos is designed to provide a fast and simple way to upload, organize, bro
 
 | Layer | Technology | Description |
 |---|---|---|
-| **Frontend** | [Svelte 5](https://svelte.dev/) / [SvelteKit](https://svelte.dev/docs/kit) | Modern, fast reactive UI framework |
-| **Styling & Tooling** | TypeScript, Vite, Tailwind CSS | Type-safe front-end tooling |
+| **Frontend** | [Svelte 5](https://svelte.dev/) / [SvelteKit](https://svelte.dev/docs/kit) | Modern, fast reactive UI framework using Svelte Runes |
+| **Styling & Tooling** | TypeScript, Vite, Tailwind CSS | Type-safe front-end tooling with Light & Dark mode support |
 | **Backend** | [Go (Golang)](https://golang.org/) | High-concurrency, low-footprint REST API |
 | **Database** | [SQLite](https://www.sqlite.org/) | Embedded zero-config metadata store |
 | **Object Storage** | [MinIO](https://min.io/) | S3-compatible self-hosted object storage |
@@ -97,9 +97,19 @@ DeepPhotos is designed to provide a fast and simple way to upload, organize, bro
 DeepPhotos/
 ├── frontend/                # SvelteKit frontend web application
 │   ├── src/
-│   │   ├── lib/             # Reusable UI components, stores, & API client
-│   │   └── routes/          # SvelteKit pages (Timeline, Albums, Viewer, Search)
-│   ├── static/              # Static public assets
+│   │   ├── lib/             # Reusable UI components, state store, & Sidebar/Header
+│   │   │   ├── components/  # Sidebar, TopHeader, Shadcn UI primitives
+│   │   │   └── state.svelte.ts # Svelte 5 global state (Theme, Auth, Users, Audit logs)
+│   │   └── routes/          # SvelteKit pages
+│   │       ├── +page.svelte           # Minimal right-aligned login page
+│   │       └── (app)/                 # Main authenticated layout
+│   │           ├── gallery/           # Photo grid with Next/Prev Lightbox
+│   │           ├── memories/          # Photo memories & highlights
+│   │           ├── albums/            # Photo collection albums
+│   │           ├── locked/            # AES-256 passcode vault
+│   │           ├── documents/         # Document scans & PDFs
+│   │           ├── bin/               # Deleted photo trash
+│   │           └── profile/           # User details, Admin User Management & Audit Logs
 │   ├── package.json
 │   ├── svelte.config.js
 │   └── vite.config.ts
@@ -113,9 +123,7 @@ DeepPhotos/
 │   └── docker-compose.yaml  # Service setup for MinIO, Go API, & Frontend
 │
 ├── .env.template            # Template for required environment variables
-├── build.sh                 # Build helper script
-├── run.sh                   # Run helper script
-├── dev.sh                   # Development startup script
+├── LICENSE                  # Apache License 2.0
 └── README.md                # Project documentation
 ```
 
@@ -173,38 +181,11 @@ To keep the UI responsive on low-power servers and mobile browsers, the gallery 
                        │
                        │ Click photo
                        ▼
-                 Full-size viewer
+                 Next / Prev Lightbox viewer
                        │
                        ▼
                  Original image
 ```
-
-### 🔄 Asynchronous Upload Architecture
-
-```text
-User  ──(Upload Photo)──>  SvelteKit UI  ──(POST /api/photos)──>  Go API Service
-                                                                     │
-                                                 ┌───────────────────┴───────────────────┐
-                                                 ▼                                       ▼
-                                           MinIO Storage                           SQLite Database
-                                        (Save Original File)                     (Write Photo Record)
-                                                 │
-                                                 ▼
-                                        Background Worker
-                                   (Generate WebP Thumbnail)
-                                                 │
-                                                 ▼
-                                           MinIO Storage
-                                        (Save Thumbnail File)
-```
-
----
-
-## 🔐 Security & Access Control
-
-* **Decoupled Credentials**: SvelteKit never handles MinIO credentials; media is securely proxied or served via presigned URLs generated by the Go backend.
-* **Controlled Access**: Go API validates session tokens and user authorization before serving media or metadata.
-* **Planned Features**: Multi-user authentication, private albums, link sharing with expiration dates, and rate limiting.
 
 ---
 
@@ -276,30 +257,26 @@ Access points:
 
 ## 🧭 Development Roadmap
 
-### Phase 1 — Foundation (Current)
-* [x] SvelteKit 5 project setup & layout
+### Phase 1 — Foundation & UI (Completed / Active)
+* [x] SvelteKit 5 project setup & Svelte Runes architecture
+* [x] Minimal right-side login page with pre-filled dev credentials
+* [x] Collapsible sidebar (Minimize / Maximize toggle)
+* [x] TopHeader with compact user profile avatar & Sun/Moon theme switcher
+* [x] Next & Previous Lightbox photo viewer with keyboard shortcuts
+* [x] Admin User Management (Add & Delete Users)
+* [x] Login Activity Audit Logs
 * [x] Infrastructure & Docker architecture definition
-* [ ] Go REST API foundation
-* [ ] SQLite schema & migration runner
-* [ ] MinIO client integration
 
-### Phase 2 — Core Photo Management
+### Phase 2 — Core Photo Management & Backend Integration
 * [ ] Multi-file photo uploader with progress tracking
 * [ ] Background worker for thumbnail generation (WebP)
-* [ ] High-performance photo grid with lazy loading & virtual scroll
-* [ ] Lightbox viewer with full EXIF metadata display
-* [ ] Photo deletion (Trash) and restoration
+* [ ] High-performance photo grid connected to Go REST API
+* [ ] EXIF metadata parsing & display
 
-### Phase 3 — Organization & Search
+### Phase 3 — Organization & Advanced Features
 * [ ] Custom photo albums & tagging
-* [ ] Favorites collection
 * [ ] Timeline grouping by date/year
-* [ ] Metadata and filename search
-
-### Phase 4 — Optimization & Advanced Features
 * [ ] SHA-256 duplicate image detection
-* [ ] Video upload & streaming playback
-* [ ] EXIF map visualization (GPS coordinates)
 * [ ] Shared albums & temporary access links
 
 ---
@@ -315,4 +292,4 @@ Access points:
 
 ## 📜 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [Apache License 2.0](LICENSE).
