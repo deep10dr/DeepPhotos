@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-sky-light: #87CEFA;
+  --color-sky-soft: #E0F2FE;
+}
+
+@layer base {
+  body {
+    background-color: #FFFFFF;
+    color: #0F172A;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    overflow-x: hidden;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  html.dark body {
+    background-color: #090D16;
+    color: #F8FAFC;
+  }
+}
+
+/* Keyframes */
+@keyframes cloudFloat {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.02);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-cloud-float {
+  animation: cloudFloat 8s ease-in-out infinite;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Minimal Card Primitives */
+.cloud-card {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04);
+  transition: all 0.25s ease;
+}
+
+.dark .cloud-card {
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+}
+
+.cloud-input {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  color: #0F172A;
+  transition: all 0.2s ease;
+}
+
+.dark .cloud-input {
+  background: #1E293B;
+  border: 1px solid #334155;
+  color: #F8FAFC;
+}
+
+.cloud-input:focus {
+  border-color: #38BDF8;
+  background: #FFFFFF;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15);
+}
+
+.dark .cloud-input:focus {
+  border-color: #38BDF8;
+  background: #0F172A;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+}
+
+.cloud-input::placeholder {
+  color: #94A3B8;
+}
+
+.dark .cloud-input::placeholder {
+  color: #64748B;
+}
