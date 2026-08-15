@@ -1,10 +1,75 @@
 <script lang="ts">
+	import { appState } from '$lib/state.svelte';
 	import { Trash2, RotateCcw, Image as ImageIcon } from 'lucide-svelte';
 
-	const binnedItems = [
-		{ name: 'Blurry Shot 001.jpg', size: '2.1 MB', deletedDate: '2 days ago' },
-		{ name: 'Duplicate Capture.jpg', size: '4.5 MB', deletedDate: '5 days ago' }
-	];
+	interface DeletedPhoto {
+		id: string;
+		title: string;
+		filename: string;
+		size: number;
+		updated_at: string;
+	}
+
+	let binnedItems = $state<DeletedPhoto[]>([]);
+	let isLoading = $state(true);
+
+	async function fetchBinItems() {
+		isLoading = true;
+		try {
+			const res = await fetch(`${appState.apiBaseUrl}/api/photos?deleted=true`);
+			if (res.ok) {
+				binnedItems = await res.json();
+			}
+		} catch (e) {
+			console.warn('API error fetching bin items:', e);
+		} finally {
+			isLoading = false;
+		}
+	}
+
+	$effect(() => {
+		fetchBinItems();
+	});
+
+	async function restoreItem(id: string) {
+		try {
+			await fetch(`${appState.apiBaseUrl}/api/photos/batch-restore`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ ids: [id] })
+			});
+			appState.refreshPhotos();
+			fetchBinItems();
+		} catch (err) {
+			console.error('Error restoring photo:', err);
+		}
+	}
+
+	async function emptyBin() {
+		if (binnedItems.length === 0) return;
+		if (!confirm(`Permanently purge ${binnedItems.length} items from server storage? This action cannot be undone.`)) return;
+
+		const ids = binnedItems.map(item => item.id);
+		try {
+			await fetch(`${appState.apiBaseUrl}/api/photos/batch-delete`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ ids })
+			});
+			appState.refreshPhotos();
+			fetchBinItems();
+		} catch (err) {
+			console.error('Error emptying bin:', err);
+		}
+	}
+
+	function formatBytes(bytes: number): string {
+		if (!bytes) return '0 B';
+		const k = 1024;
+		const sizes = ['B', 'KB', 'MB', 'GB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+	}
 </script>
 
 <div class="space-y-6 animate-fade-in">
@@ -14,29 +79,48 @@
 				<Trash2 class="w-6 h-6 text-rose-500" />
 				Bin / Trash
 			</h1>
-			<p class="text-xs text-slate-500 dark:text-slate-400">Deleted items are permanently removed after 30 days</p>
+			<p class="text-xs text-slate-500 dark:text-slate-400">Items soft-deleted from gallery storage</p>
 		</div>
-		<button type="button" class="px-4 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900 text-xs font-bold transition-all cursor-pointer border border-transparent dark:border-rose-800">
+		<button
+			type="button"
+			onclick={emptyBin}
+			disabled={binnedItems.length === 0}
+			class="px-4 py-2 rounded-xl bg-rose-50 dark:bg-rose-950/60 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900 text-xs font-bold transition-all cursor-pointer border border-transparent dark:border-rose-800 disabled:opacity-50"
+		>
 			Empty Bin
 		</button>
 	</div>
 
-	<div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
-		{#each binnedItems as item}
-			<div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 flex items-center justify-between">
-				<div class="flex items-center gap-3">
-					<div class="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-						<ImageIcon class="w-5 h-5" />
-					</div>
-					<div>
-						<p class="text-xs font-bold text-slate-800 dark:text-white">{item.name}</p>
-						<p class="text-[11px] text-slate-400">Deleted {item.deletedDate} • {item.size}</p>
-					</div>
-				</div>
-				<button type="button" class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-300 dark:hover:border-sky-700 text-xs font-semibold flex items-center gap-1 cursor-pointer">
-					<RotateCcw class="w-3.5 h-3.5" /> Restore
-				</button>
+	{#if !isLoading && binnedItems.length === 0}
+		<div class="p-12 text-center rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm max-w-md mx-auto my-12 space-y-3">
+			<div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-500 flex items-center justify-center mx-auto">
+				<Trash2 class="w-6 h-6" />
 			</div>
-		{/each}
-	</div>
+			<h3 class="text-base font-bold text-slate-900 dark:text-white">Bin is empty</h3>
+			<p class="text-xs text-slate-500 dark:text-slate-400">Deleted photos will appear here before permanent purging.</p>
+		</div>
+	{:else}
+		<div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
+			{#each binnedItems as item}
+				<div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 flex items-center justify-between">
+					<div class="flex items-center gap-3">
+						<div class="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+							<ImageIcon class="w-5 h-5" />
+						</div>
+						<div>
+							<p class="text-xs font-bold text-slate-800 dark:text-white">{item.title || item.filename}</p>
+							<p class="text-[11px] text-slate-400">Deleted {item.updated_at || 'Recently'} • {formatBytes(item.size)}</p>
+						</div>
+					</div>
+					<button
+						type="button"
+						onclick={() => restoreItem(item.id)}
+						class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-300 dark:hover:border-sky-700 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+					>
+						<RotateCcw class="w-3.5 h-3.5" /> Restore
+					</button>
+				</div>
+			{/each}
+		</div>
+	{/if}
 </div>

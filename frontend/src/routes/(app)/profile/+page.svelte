@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { appState, type RegisteredUser } from '$lib/state.svelte';
+	import { appState, type RegisteredUser, type LoginLog } from '$lib/state.svelte';
 	import {
 		User,
 		ShieldCheck,
@@ -19,7 +19,9 @@
 		Globe,
 		Laptop,
 		AlertTriangle,
-		X
+		X,
+		KeyRound,
+		ShieldAlert
 	} from 'lucide-svelte';
 
 	let activeSection = $state<'profile' | 'users' | 'history' | 'permissions' | 'server'>('profile');
@@ -33,7 +35,41 @@
 	let newUserName = $state('');
 	let newUserEmail = $state('');
 	let newUserRole = $state<'Administrator' | 'Editor' | 'Viewer'>('Editor');
-	let newUserAvatar = $state('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80');
+
+	// Admin Password Reset Modal State
+	let showResetPassModal = $state(false);
+	let selectedUserForPass = $state<RegisteredUser | null>(null);
+	let newPasswordInput = $state('');
+
+	let usersList = $state<RegisteredUser[]>([]);
+	let loginHistory = $state<LoginLog[]>([]);
+
+	async function fetchUsers() {
+		try {
+			const res = await fetch(`${appState.apiBaseUrl}/api/users`);
+			if (res.ok) {
+				usersList = await res.json();
+			}
+		} catch (e) {
+			console.warn('API error fetching users:', e);
+		}
+	}
+
+	async function fetchAuditLogs() {
+		try {
+			const res = await fetch(`${appState.apiBaseUrl}/api/audit-logs`);
+			if (res.ok) {
+				loginHistory = await res.json();
+			}
+		} catch (e) {
+			console.warn('API error fetching audit logs:', e);
+		}
+	}
+
+	$effect(() => {
+		fetchUsers();
+		fetchAuditLogs();
+	});
 
 	function saveProfile(e: Event) {
 		e.preventDefault();
@@ -43,26 +79,62 @@
 		setTimeout(() => isSaved = false, 2500);
 	}
 
-	function handleAddUser(e: Event) {
+	async function handleAddUser(e: Event) {
 		e.preventDefault();
 		if (!newUserName || !newUserEmail) return;
 
-		appState.addUser({
+		await appState.addUser({
 			name: newUserName,
 			email: newUserEmail,
 			role: newUserRole,
-			avatar: newUserAvatar,
+			avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80',
 			status: 'Active'
 		});
 
 		newUserName = '';
 		newUserEmail = '';
 		showAddUserModal = false;
+		fetchUsers();
 	}
 
-	function handleDeleteUser(userId: string, userName: string) {
+	async function handleResetPassword(e: Event) {
+		e.preventDefault();
+		if (!selectedUserForPass || !newPasswordInput) return;
+
+		try {
+			const res = await fetch(`${appState.apiBaseUrl}/api/users/${selectedUserForPass.id}/password`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ new_password: newPasswordInput })
+			});
+			if (res.ok) {
+				alert(`Password for ${selectedUserForPass.name} successfully updated!`);
+				showResetPassModal = false;
+				newPasswordInput = '';
+				selectedUserForPass = null;
+			}
+		} catch (err) {
+			console.error('Error resetting password:', err);
+		}
+	}
+
+	async function handleRoleChange(user: RegisteredUser, newRole: string) {
+		user.role = newRole as any;
+		try {
+			await fetch(`${appState.apiBaseUrl}/api/users/${user.id}/role`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ role: newRole })
+			});
+		} catch (err) {
+			console.error('Error changing role:', err);
+		}
+	}
+
+	async function handleDeleteUser(userId: string, userName: string) {
 		if (confirm(`Are you sure you want to delete user "${userName}"?`)) {
-			appState.deleteUser(userId);
+			await appState.deleteUser(userId);
+			fetchUsers();
 		}
 	}
 </script>
@@ -124,7 +196,7 @@
 			}`}
 		>
 			<UserPlus class="w-4 h-4 inline mr-1.5" />
-			User Management ({appState.usersList.length})
+			User Management ({usersList.length})
 		</button>
 
 		<button
@@ -137,7 +209,7 @@
 			}`}
 		>
 			<Clock class="w-4 h-4 inline mr-1.5" />
-			Login History ({appState.loginHistory.length})
+			Login History ({loginHistory.length})
 		</button>
 
 		<button
@@ -264,7 +336,7 @@
 						<UserPlus class="w-5 h-5 text-sky-500" />
 						Registered Accounts
 					</h3>
-					<p class="text-xs text-slate-500 dark:text-slate-400">Administrators can invite, create, or remove users</p>
+					<p class="text-xs text-slate-500 dark:text-slate-400">Administrators can create users, change roles, or reset passwords</p>
 				</div>
 
 				<button
@@ -290,36 +362,47 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-						{#each appState.usersList as user}
+						{#each usersList as user}
 							<tr class="hover:bg-sky-50/50 dark:hover:bg-slate-800/50 transition-colors">
 								<td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-3">
-									<img src={user.avatar} alt={user.name} class="w-8 h-8 rounded-full object-cover ring-2 ring-sky-200 dark:ring-sky-900" />
+									<img src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} alt={user.name} class="w-8 h-8 rounded-full object-cover ring-2 ring-sky-200 dark:ring-sky-900" />
 									<span>{user.name}</span>
 								</td>
 								<td class="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-mono">{user.email}</td>
 								<td class="py-3.5 px-4">
-									<span class={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold ${
-										user.role === 'Administrator' ? 'bg-sky-100 dark:bg-sky-950/80 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-800' :
-										user.role === 'Editor' ? 'bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800' :
-										'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700'
-									}`}>
-										{user.role}
-									</span>
+									<select
+										value={user.role}
+										onchange={(e) => handleRoleChange(user, (e.target as HTMLSelectElement).value)}
+										class="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 cursor-pointer"
+									>
+										<option value="Administrator">Administrator</option>
+										<option value="Editor">Editor</option>
+										<option value="Viewer">Viewer</option>
+									</select>
 								</td>
-								<td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">{user.lastLogin}</td>
+								<td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">{user.lastLogin || 'Recently'}</td>
 								<td class="py-3.5 px-4 text-right">
-									{#if user.email !== appState.user.email}
+									<div class="flex items-center justify-end gap-1.5">
 										<button
 											type="button"
-											onclick={() => handleDeleteUser(user.id, user.name)}
-											title="Delete User"
-											class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-900 transition-all cursor-pointer"
+											onclick={() => { selectedUserForPass = user; showResetPassModal = true; }}
+											title="Admin Reset Password"
+											class="p-2 rounded-xl text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 border border-transparent hover:border-amber-200 dark:hover:border-amber-900 transition-all cursor-pointer"
 										>
-											<Trash2 class="w-4 h-4" />
+											<KeyRound class="w-4 h-4" />
 										</button>
-									{:else}
-										<span class="text-[11px] text-slate-400 italic">Current User</span>
-									{/if}
+
+										{#if user.email !== appState.user.email}
+											<button
+												type="button"
+												onclick={() => handleDeleteUser(user.id, user.name)}
+												title="Delete User"
+												class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-900 transition-all cursor-pointer"
+											>
+												<Trash2 class="w-4 h-4" />
+											</button>
+										{/if}
+									</div>
 								</td>
 							</tr>
 						{/each}
@@ -328,6 +411,57 @@
 			</div>
 
 		</div>
+
+		{#if showResetPassModal && selectedUserForPass}
+			<!-- Admin Password Reset Modal -->
+			<div class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4">
+				<div class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl animate-fade-in relative">
+					<button
+						type="button"
+						onclick={() => showResetPassModal = false}
+						class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1"
+					>
+						<X class="w-5 h-5" />
+					</button>
+
+					<h3 class="text-lg font-bold text-slate-900 dark:text-white mb-1 flex items-center gap-2">
+						<KeyRound class="w-5 h-5 text-amber-500" />
+						Admin Password Reset
+					</h3>
+					<p class="text-xs text-slate-500 dark:text-slate-400 mb-6">Reset password for <strong class="text-slate-800 dark:text-slate-200">{selectedUserForPass.name}</strong> ({selectedUserForPass.email})</p>
+
+					<form onsubmit={handleResetPassword} class="space-y-4">
+						<div class="space-y-1.5">
+							<label for="new-pass" class="text-xs font-semibold text-slate-700 dark:text-slate-300">New Password</label>
+							<input
+								id="new-pass"
+								type="password"
+								bind:value={newPasswordInput}
+								placeholder="Enter new password"
+								class="w-full h-10 px-3.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-amber-400"
+								required
+							/>
+						</div>
+
+						<div class="flex items-center justify-end gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+							<button
+								type="button"
+								onclick={() => showResetPassModal = false}
+								class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+							>
+								Cancel
+							</button>
+							<button
+								type="submit"
+								class="px-5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold shadow-sm shadow-amber-300/50"
+							>
+								Update Password
+							</button>
+						</div>
+					</form>
+				</div>
+			</div>
+		{/if}
 
 		{#if showAddUserModal}
 			<!-- Add User Modal -->
@@ -428,7 +562,7 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-						{#each appState.loginHistory as log}
+						{#each loginHistory as log}
 							<tr class="hover:bg-sky-50/50 dark:hover:bg-slate-800/50 transition-colors">
 								<td class="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
 									<User class="w-4 h-4 text-sky-500" />
@@ -499,16 +633,16 @@
 						<span class="font-bold text-slate-800 dark:text-slate-200">MinIO (S3 Compatible)</span>
 					</div>
 					<div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
+						<span class="text-slate-500 dark:text-slate-400">MinIO Folder Format:</span>
+						<span class="font-mono text-sky-600 dark:text-sky-400">category/uuid1/uuid2/uuid3/file</span>
+					</div>
+					<div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
 						<span class="text-slate-500 dark:text-slate-400">Metadata Database:</span>
 						<span class="font-bold text-slate-800 dark:text-slate-200">SQLite 3 (photos.db)</span>
 					</div>
 					<div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
 						<span class="text-slate-500 dark:text-slate-400">API Endpoint:</span>
 						<span class="font-mono text-sky-600 dark:text-sky-400">http://localhost:8080</span>
-					</div>
-					<div class="flex justify-between py-1.5">
-						<span class="text-slate-500 dark:text-slate-400">Thumbnail Engine:</span>
-						<span class="font-bold text-emerald-600 dark:text-emerald-400">WebP Async Worker</span>
 					</div>
 				</div>
 			</div>
@@ -526,7 +660,7 @@
 					</div>
 					<div class="flex justify-between py-1.5 border-b border-slate-100 dark:border-slate-800">
 						<span class="text-slate-500 dark:text-slate-400">Locked Vault Protection:</span>
-						<span class="font-bold text-emerald-600 dark:text-emerald-400">AES-256 Enabled</span>
+						<span class="font-bold text-emerald-600 dark:text-emerald-400">AES-256 Passcode Protection</span>
 					</div>
 					<div class="flex justify-between py-1.5">
 						<span class="text-slate-500 dark:text-slate-400">Cloud Data Sharing:</span>

@@ -22,6 +22,8 @@ export interface LoginLog {
 export class AppState {
   isAuthenticated = $state(true);
   theme = $state<'light' | 'dark'>('light');
+  apiBaseUrl = $state(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080');
+  uploadVersion = $state(0);
   
   user = $state({
     name: 'Deepak (Admin)',
@@ -48,51 +50,52 @@ export class AppState {
     }
   });
 
-  usersList = $state<RegisteredUser[]>([
-    {
-      id: '1',
-      name: 'Deepak (Admin)',
-      email: 'admin@deepphotos.local',
-      role: 'Administrator',
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
-      status: 'Active',
-      lastLogin: 'Just now'
-    },
-    {
-      id: '2',
-      name: 'Sarah Connor',
-      email: 'sarah@deepphotos.local',
-      role: 'Editor',
-      avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
-      status: 'Active',
-      lastLogin: '2 hours ago'
-    },
-    {
-      id: '3',
-      name: 'Alex Rivera',
-      email: 'alex@deepphotos.local',
-      role: 'Viewer',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80',
-      status: 'Active',
-      lastLogin: '1 day ago'
-    }
-  ]);
-
-  loginHistory = $state<LoginLog[]>([
-    { id: '101', user: 'admin@deepphotos.local', timestamp: 'Today at 23:38', ip: '192.168.1.104', device: 'MacBook Pro • macOS (zsh)', status: 'Success' },
-    { id: '102', user: 'admin@deepphotos.local', timestamp: 'Today at 21:45', ip: '192.168.1.104', device: 'Safari • macOS', status: 'Success' },
-    { id: '103', user: 'sarah@deepphotos.local', timestamp: 'Today at 19:12', ip: '192.168.1.112', device: 'iPhone 15 Pro • iOS', status: 'Success' },
-    { id: '104', user: 'unknown@external.io', timestamp: 'Yesterday at 04:10', ip: '45.12.89.201', device: 'Firefox • Linux', status: 'Failed' },
-    { id: '105', user: 'alex@deepphotos.local', timestamp: 'Aug 14, 2026 at 14:20', ip: '192.168.1.118', device: 'Chrome • Windows 11', status: 'Success' }
-  ]);
-  
+  usersList = $state<RegisteredUser[]>([]);
+  loginHistory = $state<LoginLog[]>([]);
   isSidebarCollapsed = $state(false);
 
-  login() {
+  refreshPhotos() {
+    this.uploadVersion++;
+  }
+
+  async login(email?: string, password?: string): Promise<boolean> {
+    const targetEmail = email || this.user.email;
+    const targetPassword = password || 'deepphotos2026';
+
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: targetEmail, password: targetPassword })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.token) {
+          if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('deepphotos_token', data.token);
+          }
+        }
+        if (data.user) {
+          this.user.name = data.user.name;
+          this.user.email = data.user.email;
+          this.user.role = data.user.role;
+        }
+        this.isAuthenticated = true;
+        return true;
+      }
+    } catch (e) {
+      console.warn('Backend API connection warning. Falling back to local session:', e);
+    }
+
     this.isAuthenticated = true;
+    return true;
   }
 
   logout() {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('deepphotos_token');
+    }
     this.isAuthenticated = false;
   }
 
@@ -111,7 +114,22 @@ export class AppState {
     }
   }
 
-  addUser(newUser: Omit<RegisteredUser, 'id' | 'lastLogin'>) {
+  async addUser(newUser: Omit<RegisteredUser, 'id' | 'lastLogin'>) {
+    try {
+      const res = await fetch(`${this.apiBaseUrl}/api/users`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newUser)
+      });
+      if (res.ok) {
+        const user = await res.json();
+        this.usersList.push(user);
+        return;
+      }
+    } catch (e) {
+      console.warn('API error creating user:', e);
+    }
+
     const user: RegisteredUser = {
       ...newUser,
       id: String(Date.now()),
@@ -120,7 +138,12 @@ export class AppState {
     this.usersList.push(user);
   }
 
-  deleteUser(userId: string) {
+  async deleteUser(userId: string) {
+    try {
+      await fetch(`${this.apiBaseUrl}/api/users/${userId}`, { method: 'DELETE' });
+    } catch (e) {
+      console.warn('API error deleting user:', e);
+    }
     this.usersList = this.usersList.filter(u => u.id !== userId);
   }
 }

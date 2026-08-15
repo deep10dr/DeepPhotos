@@ -1,0 +1,69 @@
+services:
+  # 1. Self-Hosted MinIO Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: deepphotos-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-minioadmin}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # 2. Go Backend REST API Microservice
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: deepphotos-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      DB_PATH: /app/data/photos.db
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-minioadmin}
+      MINIO_BUCKET: deepphotos
+      MINIO_USE_SSL: "false"
+      JWT_SECRET: ${JWT_SECRET:-deepphotos-secret-key-2026}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@deepphotos.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-deepphotos2026}
+    volumes:
+      - sqlite_data:/app/data
+    depends_on:
+      minio:
+        condition: service_healthy
+
+  # 3. SvelteKit Frontend Web Application
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    container_name: deepphotos-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    environment:
+      NODE_ENV: production
+      PORT: 5173
+      HOST: "0.0.0.0"
+      VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8080}
+    depends_on:
+      - backend
+
+volumes:
+  minio_data:
+    driver: local
+  sqlite_data:
+    driver: local
