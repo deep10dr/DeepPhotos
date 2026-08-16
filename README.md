@@ -62,6 +62,28 @@ deepphotos/
 
 ---
 
+## 🚀 Quick Start & How to Run
+
+DeepPhotos provides automated scripts for both Mac/Linux and Windows to easily build and run the application.
+
+### Mac & Linux
+All Mac and Linux shell scripts are located in the `scripts/mac-linux/` folder.
+
+- **Start Development Server**: `./scripts/mac-linux/dev.sh`
+- **Build the Application**: `./scripts/mac-linux/build.sh`
+- **Run the Application**: `./scripts/mac-linux/run.sh` (Starts Docker if available, otherwise runs standalone)
+- **Build and Run**: `./scripts/mac-linux/build_and_run.sh`
+
+### Windows
+All Windows batch scripts are located in the `scripts/windows/` folder. You can double-click them in File Explorer or run them from the command prompt.
+
+- **Start Development Server**: `scripts\windows\dev.bat`
+- **Build the Application**: `scripts\windows\build.bat`
+- **Run the Application**: `scripts\windows\run.bat`
+- **Build and Run**: `scripts\windows\build_and_run.bat`
+
+---
+
 ## 🛠️ Tech Stack
 
 | Layer | Technology | Description |

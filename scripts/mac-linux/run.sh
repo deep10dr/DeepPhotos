@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+cd "$(dirname "$0")/../.."
 
 # Kill any existing server process running on port 8080
 if lsof -pi :8080 -sTCP:LISTEN -t >/dev/null 2>&1; then
