@@ -22,16 +22,10 @@ spinner() {
     fi
 }
 
-echo "🚀 Starting DeepPhotos Build Process..."
-> build.log
+echo "🐳 Building DeepPhotos Docker Containers..."
+> docker_build.log
 
-(cd frontend && npm install >> ../build.log 2>&1) &
-spinner $! "Installing Frontend Dependencies"
+(docker compose -f docker/docker-compose.yaml build >> docker_build.log 2>&1) &
+spinner $! "Building Docker Images (This may take a while)"
 
-(cd frontend && npm run build >> ../build.log 2>&1) &
-spinner $! "Building Frontend (SvelteKit)"
-
-(cd backend && go build -o server ./cmd/server >> ../build.log 2>&1) &
-spinner $! "Compiling Backend (Go)"
-
-echo "✅ DeepPhotos Build Complete! (See build.log for details)"
+echo "✅ Docker Build Complete! (See docker_build.log for details)"

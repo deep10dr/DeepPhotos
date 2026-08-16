@@ -42,14 +42,15 @@ deepphotos/
 ## ✨ Features & Capabilities
 
 ### 📸 Photo Management & Viewer
-* **Timeline Grid**: View photos chronologically in a responsive, clean grid layout.
-* **Next & Previous Lightbox Viewer**: High-resolution viewer with **Previous (⬅️)** and **Next (➡️)** navigation controls, image counter, and keyboard shortcuts (`←`, `→`, `Esc`).
-* **Universal Drag & Drop Ingestion**: Drag and drop photos, videos, or documents anywhere on screen to upload.
+* **Timeline Grid**: View photos chronologically in a responsive, clean grid layout with expressive emoji empty states (🖼️✨, 📄✨, 🔒✨).
+* **Premium Theater Mode Lightbox**: High-resolution, edge-to-edge viewer with backdrop blur inspired by native apps (Google/Apple Photos). Includes floating controls and keyboard shortcuts (`←`, `→`, `Esc`).
+* **Universal & External Drag & Drop**: Drag and drop local files, or drag images directly from external websites into the gallery to instantly upload them to MinIO!
 * **Favorites & Filtering**: Quickly filter media by favorites, videos, or all media.
 
 ### 📁 Albums, Vault & Organization
-* **Albums**: Create and manage custom photo collections with real-time SQLite persistence.
-* **Locked Vault & Passcode Folders**: 2-Step passcode creation workflow (Passcode & Confirm Passcode validation) to generate secure locked folders.
+* **Albums**: Create and manage custom photo collections with real-time SQLite persistence. Images inside albums open in the full-screen Lightbox viewer!
+* **Locked Vault & Passcode Folders**: 2-Step passcode creation workflow to generate secure locked folders.
+* **Move to Vault**: Seamlessly move any photo directly into a locked folder from the Lightbox viewer by providing the target folder's passcode.
 * **Admin Oversight for Locked Folders**: Administrators can view locked folder metadata (creator, timestamp, count) and manage them.
 * **Documents & Scans**: Dedicated document storage for scans and PDFs.
 * **Bin / Trash**: Deleted media recovery and storage purging.
@@ -70,17 +71,19 @@ DeepPhotos provides automated scripts for both Mac/Linux and Windows to easily b
 All Mac and Linux shell scripts are located in the `scripts/mac-linux/` folder.
 
 - **Start Development Server**: `./scripts/mac-linux/dev.sh`
-- **Build the Application**: `./scripts/mac-linux/build.sh`
+- **Build Local Application**: `./scripts/mac-linux/build.sh`
+- **Build Docker Containers**: `./scripts/mac-linux/docker_build.sh`
 - **Run the Application**: `./scripts/mac-linux/run.sh` (Starts Docker if available, otherwise runs standalone)
-- **Build and Run**: `./scripts/mac-linux/build_and_run.sh`
+- **Build Local and Run**: `./scripts/mac-linux/build_and_run.sh`
 
 ### Windows
 All Windows batch scripts are located in the `scripts/windows/` folder. You can double-click them in File Explorer or run them from the command prompt.
 
 - **Start Development Server**: `scripts\windows\dev.bat`
-- **Build the Application**: `scripts\windows\build.bat`
+- **Build Local Application**: `scripts\windows\build.bat`
+- **Build Docker Containers**: `scripts\windows\docker_build.bat`
 - **Run the Application**: `scripts\windows\run.bat`
-- **Build and Run**: `scripts\windows\build_and_run.bat`
+- **Build Local and Run**: `scripts\windows\build_and_run.bat`
 
 ---
 
