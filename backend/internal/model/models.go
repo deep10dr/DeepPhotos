@@ -111,6 +111,10 @@ type UpdatePhotoRequest struct {
 	LockedFolderID *string `json:"locked_folder_id"`
 }
 
+type URLUploadRequest struct {
+	URL string `json:"url"`
+}
+
 type BatchIDsRequest struct {
 	IDs []string `json:"ids"`
 }

@@ -70,6 +70,32 @@ func (h *PhotosHandler) Upload(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(uploadedPhotos)
 }
 
+// UploadURL handles downloading & saving external website image URLs
+func (h *PhotosHandler) UploadURL(w http.ResponseWriter, r *http.Request) {
+	var req model.URLUploadRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.URL == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: "Invalid URL upload payload"})
+		return
+	}
+
+	photo, err := h.photoService.UploadPhotoFromURL(r.Context(), req.URL)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	photo.URL = "/api/photos/" + photo.ID + "/file"
+	photo.ThumbnailURL = "/api/photos/" + photo.ID + "/thumbnail"
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(photo)
+}
+
 // List handles listing media with filters
 func (h *PhotosHandler) List(w http.ResponseWriter, r *http.Request) {
 	favOnly := r.URL.Query().Get("favorite") == "true"

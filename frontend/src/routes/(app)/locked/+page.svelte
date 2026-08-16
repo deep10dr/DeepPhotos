@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { appState } from '$lib/state.svelte';
-	import { Lock, Unlock, Key, ShieldCheck, FolderClosed, Plus, X, Trash2, User, Clock, AlertCircle } from 'lucide-svelte';
+	import { Lock, Unlock, Key, ShieldCheck, FolderClosed, Plus, X, Trash2, User, Clock, AlertCircle, FileText, Image as ImageIcon, Video, Play, Download } from 'lucide-svelte';
 
 	interface LockedFolder {
 		id: string;
@@ -10,6 +10,17 @@
 		description: string;
 		photos_count: number;
 		created_at: string;
+	}
+
+	interface MediaItem {
+		id: string;
+		title: string;
+		filename: string;
+		mime_type: string;
+		file_type: string;
+		size: number;
+		url?: string;
+		thumbnail_url?: string;
 	}
 
 	let folders = $state<LockedFolder[]>([]);
@@ -29,6 +40,8 @@
 	let unlockPasscode = $state('');
 	let isUnlocked = $state(false);
 	let unlockError = $state('');
+	let lockedMediaItems = $state<MediaItem[]>([]);
+	let isFetchingMedia = $state(false);
 
 	async function fetchLockedFolders() {
 		isLoading = true;
@@ -41,6 +54,25 @@
 			console.warn('API error fetching locked folders:', e);
 		} finally {
 			isLoading = false;
+		}
+	}
+
+	async function fetchLockedFolderMedia(folderId: string) {
+		isFetchingMedia = true;
+		try {
+			const res = await fetch(`${appState.apiBaseUrl}/api/photos?locked_folder_id=${folderId}`);
+			if (res.ok) {
+				const data = await res.json();
+				lockedMediaItems = data.map((item: any) => ({
+					...item,
+					url: `${appState.apiBaseUrl}/api/photos/${item.id}/file`,
+					thumbnail_url: `${appState.apiBaseUrl}/api/photos/${item.id}/thumbnail`
+				}));
+			}
+		} catch (e) {
+			console.warn('API error fetching locked media:', e);
+		} finally {
+			isFetchingMedia = false;
 		}
 	}
 
@@ -116,6 +148,7 @@
 			if (res.ok) {
 				isUnlocked = true;
 				unlockPasscode = '';
+				await fetchLockedFolderMedia(selectedFolder.id);
 			} else {
 				unlockError = 'Incorrect passcode! Access denied.';
 			}
@@ -137,6 +170,14 @@
 		} catch (err) {
 			console.error('Error deleting locked folder:', err);
 		}
+	}
+
+	function formatBytes(bytes: number): string {
+		if (!bytes) return '0 B';
+		const k = 1024;
+		const sizes = ['B', 'KB', 'MB', 'GB'];
+		const i = Math.floor(Math.log(bytes) / Math.log(k));
+		return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
 	}
 </script>
 
@@ -160,12 +201,11 @@
 		</button>
 	</div>
 
+	<!-- EMPTY STATE WITH EMOJI -->
 	{#if !isLoading && folders.length === 0}
 		<div class="p-12 text-center rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm max-w-md mx-auto my-12 space-y-3">
-			<div class="w-12 h-12 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-500 flex items-center justify-center mx-auto">
-				<Lock class="w-6 h-6" />
-			</div>
-			<h3 class="text-base font-bold text-slate-900 dark:text-white">No locked folders created</h3>
+			<div class="text-5xl mb-2">🔒✨</div>
+			<h3 class="text-base font-bold text-slate-900 dark:text-white">This locked vault is empty</h3>
 			<p class="text-xs text-slate-500 dark:text-slate-400">Click <strong class="text-sky-500">New Locked Folder</strong> to create a passcode-protected private folder.</p>
 		</div>
 	{:else}
@@ -175,7 +215,7 @@
 				<div
 					role="button"
 					tabindex="0"
-					onclick={() => { selectedFolder = folder; isUnlocked = false; unlockPasscode = ''; unlockError = ''; }}
+					onclick={() => { selectedFolder = folder; isUnlocked = false; unlockPasscode = ''; unlockError = ''; lockedMediaItems = []; }}
 					onkeydown={(e) => e.key === 'Enter' && (selectedFolder = folder)}
 					class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-all group cursor-pointer relative"
 				>
@@ -324,10 +364,10 @@
 		</div>
 	{/if}
 
-	<!-- UNLOCK FOLDER MODAL -->
+	<!-- UNLOCK FOLDER & VIEW CONTENTS MODAL -->
 	{#if selectedFolder}
-		<div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-md flex items-center justify-center p-4">
-			<div class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl animate-fade-in relative text-center">
+		<div class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+			<div class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 max-w-3xl w-full border border-slate-200 dark:border-slate-800 shadow-2xl animate-fade-in relative text-center flex flex-col max-h-[85vh]">
 				<button
 					type="button"
 					onclick={() => selectedFolder = null}
@@ -370,29 +410,58 @@
 						</div>
 					</form>
 				{:else}
-					<!-- Unlocked Folder Contents -->
-					<div class="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950 text-emerald-500 flex items-center justify-center mx-auto mb-3">
-						<Unlock class="w-7 h-7" />
-					</div>
-					<h3 class="text-lg font-bold text-slate-900 dark:text-white">{selectedFolder.name} (Unlocked)</h3>
-					<p class="text-xs text-emerald-600 dark:text-emerald-400 mt-1 mb-6">AES-256 decrypted access granted</p>
+					<!-- UNLOCKED FOLDER MEDIA DISPLAY & EMOJI EMPTY STATE -->
+					<div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4 mb-4">
+						<div class="flex items-center gap-3">
+							<div class="w-10 h-10 rounded-xl bg-emerald-100 dark:bg-emerald-950 text-emerald-500 flex items-center justify-center">
+								<Unlock class="w-5 h-5" />
+							</div>
+							<div class="text-left">
+								<h3 class="text-base font-bold text-slate-900 dark:text-white">{selectedFolder.name} (Unlocked)</h3>
+								<p class="text-xs text-slate-500 dark:text-slate-400">{lockedMediaItems.length} protected items stored</p>
+							</div>
+						</div>
 
-					<div class="p-6 rounded-2xl bg-slate-50 dark:bg-slate-800 text-xs text-slate-600 dark:text-slate-300 space-y-2 text-left">
-						<p class="font-bold text-slate-800 dark:text-white">Folder Metadata Audit:</p>
-						<p>• Created By: {selectedFolder.user_name || 'Admin'}</p>
-						<p>• Created Date: {selectedFolder.created_at || 'Recently'}</p>
-						<p>• Total Protected Items: {selectedFolder.photos_count || 0}</p>
-					</div>
-
-					<div class="pt-6">
 						<button
 							type="button"
 							onclick={() => selectedFolder = null}
-							class="px-6 py-2.5 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs"
+							class="px-4 py-2 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-xs"
 						>
-							Lock & Close Folder
+							Lock & Close
 						</button>
 					</div>
+
+					<!-- UNLOCKED FOLDER EMPTY STATE WITH EMOJI -->
+					{#if lockedMediaItems.length === 0}
+						<div class="p-8 text-center space-y-3 my-auto">
+							<div class="text-6xl">🔒✨</div>
+							<h4 class="text-base font-bold text-slate-900 dark:text-white">This locked folder is empty</h4>
+							<p class="text-xs text-slate-500 dark:text-slate-400">Open any photo in gallery and click <strong class="text-sky-500">Move to Vault</strong> to add items to this folder.</p>
+						</div>
+					{:else}
+						<!-- MEDIA GRID INSIDE LOCKED FOLDER -->
+						<div class="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-left p-1">
+							{#each lockedMediaItems as media}
+								<div class="p-3 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col justify-between">
+									<div class="aspect-4/3 rounded-xl overflow-hidden bg-slate-950 mb-2 relative flex items-center justify-center">
+										{#if media.file_type === 'video' || media.mime_type.startsWith('video/')}
+											<video src={media.url} controls class="w-full h-full object-cover"></video>
+										{:else if media.file_type === 'document'}
+											<FileText class="w-8 h-8 text-sky-400" />
+										{:else}
+											<img src={media.thumbnail_url || media.url} alt={media.title} class="w-full h-full object-cover" />
+										{/if}
+									</div>
+									<div class="flex items-center justify-between text-xs">
+										<span class="font-bold text-slate-800 dark:text-slate-100 truncate">{media.title}</span>
+										<a href={media.url} download={media.filename} target="_blank" class="text-sky-500 p-1 hover:bg-sky-50 dark:hover:bg-slate-700 rounded-lg">
+											<Download class="w-3.5 h-3.5" />
+										</a>
+									</div>
+								</div>
+							{/each}
+						</div>
+					{/if}
 				{/if}
 			</div>
 		</div>

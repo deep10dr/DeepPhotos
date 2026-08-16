@@ -10,8 +10,10 @@ import (
 	_ "image/png"
 	"io"
 	"log"
+	"net/http"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"deepphotos/backend/internal/model"
 	"deepphotos/backend/internal/repository"
@@ -83,10 +85,10 @@ func (s *PhotoService) UploadPhoto(ctx context.Context, filename string, content
 		ThumbnailKey: thumbnailKey,
 		MimeType:     contentType,
 		FileType:     category,
-		Size:         size,
+		Size:         int64(buf.Len()),
 		Width:        imgWidth,
 		Height:       imgHeight,
-		ExifModel:    "DeepPhotos Camera Ingest",
+		ExifModel:    "DeepPhotos Ingest",
 		Title:        title,
 		TakenAt:      "Recently",
 		IsFavorite:   false,
@@ -98,6 +100,33 @@ func (s *PhotoService) UploadPhoto(ctx context.Context, filename string, content
 	}
 
 	return photo, nil
+}
+
+func (s *PhotoService) UploadPhotoFromURL(ctx context.Context, imageURL string) (*model.Photo, error) {
+	resp, err := http.Get(imageURL)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download image from URL: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("HTTP request returned status %d", resp.StatusCode)
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "image/jpeg"
+	}
+
+	filename := filepath.Base(imageURL)
+	if strings.Contains(filename, "?") {
+		filename = strings.Split(filename, "?")[0]
+	}
+	if filename == "" || filename == "." {
+		filename = fmt.Sprintf("web_ingest_%d.jpg", time.Now().Unix())
+	}
+
+	return s.UploadPhoto(ctx, filename, contentType, resp.Body, resp.ContentLength)
 }
 
 func (s *PhotoService) DeleteSinglePhoto(ctx context.Context, id string) error {

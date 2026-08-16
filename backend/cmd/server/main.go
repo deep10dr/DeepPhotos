@@ -78,6 +78,7 @@ func main() {
 	r.Route("/api/photos", func(r chi.Router) {
 		r.Get("/", photosHandler.List)
 		r.Post("/", photosHandler.Upload)
+		r.Post("/upload-url", photosHandler.UploadURL)
 		r.Post("/batch-delete", photosHandler.DeleteBatch)
 		r.Post("/batch-restore", photosHandler.RestoreBatch)
 		r.Get("/{id}", photosHandler.GetDetail)

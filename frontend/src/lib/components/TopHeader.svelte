@@ -48,13 +48,16 @@
 		isUploading = true;
 
 		try {
-			const response = await fetch(url);
-			const blob = await response.blob();
-			const filename = url.split('/').pop()?.split('?')[0] || `web_ingest_${Date.now()}.jpg`;
-			const file = new File([blob], filename, { type: blob.type || 'image/jpeg' });
-			await uploadFiles([file]);
+			const res = await fetch(`${appState.apiBaseUrl}/api/photos/upload-url`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ url })
+			});
+			if (res.ok) {
+				appState.refreshPhotos();
+			}
 		} catch (err) {
-			console.error('Failed to fetch external dragged image:', err);
+			console.error('Failed to upload external image URL:', err);
 		} finally {
 			isUploading = false;
 		}
@@ -88,9 +91,13 @@
 		}
 
 		// 2. Drag & drop image from another website or browser tab
-		const imageUrl = e.dataTransfer?.getData('URL') ||
-			e.dataTransfer?.getData('text/uri-list') ||
-			e.dataTransfer?.getData('text/plain');
+		const htmlData = e.dataTransfer?.getData('text/html');
+		let imageUrl = e.dataTransfer?.getData('URL') || e.dataTransfer?.getData('text/uri-list');
+
+		if (!imageUrl && htmlData) {
+			const match = htmlData.match(/src=["'](https?:\/\/[^"']+)["']/i);
+			if (match) imageUrl = match[1];
+		}
 
 		if (imageUrl) {
 			await handleExternalUrlDrop(imageUrl);
@@ -110,8 +117,8 @@
 		<div class="w-20 h-20 rounded-3xl bg-sky-400/80 flex items-center justify-center shadow-xl shadow-sky-500/50 animate-bounce">
 			<CloudUpload class="w-10 h-10 text-white" />
 		</div>
-		<h2 class="text-2xl font-extrabold tracking-tight">Drop files or images from web to upload</h2>
-		<p class="text-xs text-sky-100 font-medium">Automatic classification: Images, Videos, & Documents</p>
+		<h2 class="text-2xl font-extrabold tracking-tight">Drop files or web images anywhere to upload</h2>
+		<p class="text-xs text-sky-100 font-medium">Automatic classification & MinIO storage</p>
 	</div>
 {/if}
 
