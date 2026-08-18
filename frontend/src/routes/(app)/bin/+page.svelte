@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
 	import { apiFetch } from '$lib/api';
 	import { Trash2, RotateCcw, Image as ImageIcon } from 'lucide-svelte';
@@ -28,7 +29,7 @@
 		}
 	}
 
-	$effect(() => {
+	onMount(() => {
 		fetchBinItems();
 	});
 

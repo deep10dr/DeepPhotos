@@ -5,191 +5,252 @@
 #1 DONE 0.0s
 
 #2 [frontend internal] load build definition from Dockerfile
-#2 transferring dockerfile: 560B done
+#2 transferring dockerfile: 777B 0.0s done
 #2 DONE 0.0s
 
 #3 [backend internal] load build definition from Dockerfile
 #3 transferring dockerfile: 606B done
 #3 DONE 0.0s
 
-#4 [frontend internal] load metadata for docker.io/library/node:20-alpine
-#4 DONE 0.9s
+#4 [backend internal] load metadata for docker.io/library/golang:alpine
+#4 ...
 
-#5 [backend internal] load metadata for docker.io/library/golang:alpine
-#5 ...
+#5 [frontend internal] load metadata for docker.io/library/node:20-alpine
+#5 DONE 1.3s
 
-#6 [frontend internal] load .dockerignore
-#6 transferring context: 2B done
-#6 DONE 0.0s
+#6 [backend internal] load metadata for docker.io/library/alpine:latest
+#6 DONE 1.3s
 
-#7 [frontend builder 1/6] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
-#7 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.0s done
-#7 DONE 0.0s
+#4 [backend internal] load metadata for docker.io/library/golang:alpine
+#4 DONE 1.3s
 
-#8 [frontend builder 2/6] WORKDIR /app
-#8 CACHED
+#7 [frontend internal] load .dockerignore
+#7 transferring context: 2B done
+#7 DONE 0.1s
 
-#9 [frontend internal] load build context
-#9 transferring context: 5.27MB 0.4s done
-#9 DONE 0.5s
+#8 [frontend internal] load build context
+#8 DONE 0.0s
 
-#10 [frontend builder 3/6] COPY package.json package-lock.json ./
+#9 [frontend builder 1/6] FROM docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#9 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293
+#9 resolve docker.io/library/node:20-alpine@sha256:fb4cd12c85ee03686f6af5362a0b0d56d50c58a04632e6c0fb8363f609372293 0.1s done
+#9 DONE 0.1s
+
+#10 [backend internal] load .dockerignore
+#10 transferring context: 2B done
 #10 DONE 0.1s
 
-#11 [backend internal] load metadata for docker.io/library/alpine:latest
-#11 DONE 1.9s
+#11 [backend internal] load build context
+#11 DONE 0.0s
 
-#12 [frontend builder 4/6] RUN npm ci
-#12 ...
+#12 [frontend builder 2/6] WORKDIR /app
+#12 CACHED
 
-#5 [backend internal] load metadata for docker.io/library/golang:alpine
-#5 DONE 2.2s
+#13 [backend stage-1 1/4] FROM docker.io/library/alpine:latest@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
+#13 resolve docker.io/library/alpine:latest@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b 0.1s done
+#13 DONE 0.1s
 
-#13 [backend internal] load .dockerignore
-#13 transferring context: 2B done
-#13 DONE 0.0s
+#8 [frontend internal] load build context
+#8 ...
+
+#13 [backend stage-1 1/4] FROM docker.io/library/alpine:latest@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
+#13 CACHED
 
 #14 [backend builder 1/7] FROM docker.io/library/golang:alpine@sha256:3889b425f035be855a72fb4755265311293b6d414521f0a519d819df32222d83
-#14 resolve docker.io/library/golang:alpine@sha256:3889b425f035be855a72fb4755265311293b6d414521f0a519d819df32222d83 0.0s done
+#14 resolve docker.io/library/golang:alpine@sha256:3889b425f035be855a72fb4755265311293b6d414521f0a519d819df32222d83 0.1s done
 #14 DONE 0.1s
 
 #15 [backend builder 2/7] WORKDIR /app
 #15 CACHED
 
-#16 [backend stage-1 1/4] FROM docker.io/library/alpine:latest@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b
-#16 resolve docker.io/library/alpine:latest@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db86916198a6eec434943f8b 0.0s done
-#16 CACHED
+#11 [backend internal] load build context
+#11 transferring context: 1.70kB 0.0s done
+#11 DONE 0.0s
 
-#17 [backend internal] load build context
-#17 transferring context: 19.02MB 0.1s done
-#17 DONE 0.1s
+#8 [frontend internal] load build context
+#8 transferring context: 5.30MB 0.6s done
+#8 DONE 0.7s
 
-#18 [backend stage-1 2/4] RUN apk --no-cache add ca-certificates tzdata
-#18 4.075 (1/2) Installing ca-certificates (20260611-r0)
-#18 4.123 (2/2) Installing tzdata (2026c-r0)
-#18 4.190 Executing busybox-1.37.0-r31.trigger
-#18 4.193 Executing ca-certificates-20260611-r0.trigger
-#18 4.209 OK: 9178 KiB in 18 packages
-#18 DONE 5.1s
+#16 [frontend builder 3/6] COPY package.json package-lock.json ./
+#16 DONE 0.5s
 
-#19 [backend stage-1 3/4] WORKDIR /root/
-#19 DONE 0.1s
+#17 [backend builder 3/7] RUN apk add --no-cache git
+#17 3.937 ( 1/12) Installing brotli-libs (1.2.0-r1)
+#17 4.241 ( 2/12) Installing c-ares (1.34.8-r0)
+#17 4.478 ( 3/12) Installing libunistring (1.4.2-r0)
+#17 4.850 ( 4/12) Installing libidn2 (2.3.8-r0)
+#17 5.085 ( 5/12) Installing nghttp2-libs (1.69.0-r0)
+#17 5.321 ( 6/12) Installing libpsl (0.21.5-r3)
+#17 5.563 ( 7/12) Installing zstd-libs (1.5.7-r2)
+#17 ...
 
-#20 [backend builder 3/7] RUN apk add --no-cache git
-#20 4.327 ( 1/12) Installing brotli-libs (1.2.0-r1)
-#20 4.485 ( 2/12) Installing c-ares (1.34.8-r0)
-#20 4.524 ( 3/12) Installing libunistring (1.4.2-r0)
-#20 4.687 ( 4/12) Installing libidn2 (2.3.8-r0)
-#20 4.719 ( 5/12) Installing nghttp2-libs (1.69.0-r0)
-#20 4.746 ( 6/12) Installing libpsl (0.21.5-r3)
-#20 4.768 ( 7/12) Installing zstd-libs (1.5.7-r2)
-#20 4.843 ( 8/12) Installing libcurl (8.21.0-r0)
-#20 4.916 ( 9/12) Installing libexpat (2.8.2-r0)
-#20 4.938 (10/12) Installing pcre2 (10.47-r1)
-#20 5.023 (11/12) Installing git (2.54.0-r0)
-#20 ...
+#18 [frontend builder 4/6] RUN npm ci
+#18 2.560 npm warn deprecated lucide-svelte@1.0.1: Package deprecated. Please use @lucide/svelte instead.
+#18 3.360 
+#18 3.360 > frontend@0.0.1 prepare
+#18 3.360 > svelte-kit sync || echo ''
+#18 3.360 
+#18 3.631 No Svelte config file found in /app - using SvelteKit's default configuration without an adapter.
+#18 3.981 
+#18 3.981 added 107 packages, and audited 108 packages in 4s
+#18 3.981 
+#18 3.981 22 packages are looking for funding
+#18 3.982   run `npm fund` for details
+#18 3.992 
+#18 3.992 7 low severity vulnerabilities
+#18 3.992 
+#18 3.992 To address issues that do not require attention, run:
+#18 3.992   npm audit fix
+#18 3.992 
+#18 3.992 To address all issues (including breaking changes), run:
+#18 3.992   npm audit fix --force
+#18 3.992 
+#18 3.992 Run `npm audit` for details.
+#18 3.993 npm notice
+#18 3.993 npm notice New major version of npm available! 10.8.2 -> 12.0.2
+#18 3.993 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+#18 3.993 npm notice To update run: npm install -g npm@12.0.2
+#18 3.993 npm notice
+#18 DONE 4.6s
 
-#12 [frontend builder 4/6] RUN npm ci
-#12 2.756 npm warn deprecated lucide-svelte@1.0.1: Package deprecated. Please use @lucide/svelte instead.
-#12 5.355 
-#12 5.355 > frontend@0.0.1 prepare
-#12 5.355 > svelte-kit sync || echo ''
-#12 5.355 
-#12 5.625 No Svelte config file found in /app - using SvelteKit's default configuration without an adapter.
-#12 5.976 
-#12 5.976 added 107 packages, and audited 108 packages in 6s
-#12 5.976 
-#12 5.976 22 packages are looking for funding
-#12 5.976   run `npm fund` for details
-#12 5.984 
-#12 5.984 7 low severity vulnerabilities
-#12 5.984 
-#12 5.984 To address issues that do not require attention, run:
-#12 5.984   npm audit fix
-#12 5.984 
-#12 5.984 To address all issues (including breaking changes), run:
-#12 5.984   npm audit fix --force
-#12 5.984 
-#12 5.984 Run `npm audit` for details.
-#12 5.985 npm notice
-#12 5.985 npm notice New major version of npm available! 10.8.2 -> 12.0.2
-#12 5.985 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
-#12 5.985 npm notice To update run: npm install -g npm@12.0.2
-#12 5.985 npm notice
-#12 DONE 6.0s
+#19 [backend stage-1 2/4] RUN apk --no-cache add ca-certificates tzdata
+#19 5.281 (1/2) Installing ca-certificates (20260611-r0)
+#19 5.576 (2/2) Installing tzdata (2026c-r0)
+#19 5.908 Executing busybox-1.37.0-r31.trigger
+#19 ...
+
+#17 [backend builder 3/7] RUN apk add --no-cache git
+#17 5.856 ( 8/12) Installing libcurl (8.21.0-r0)
+#17 ...
+
+#19 [backend stage-1 2/4] RUN apk --no-cache add ca-certificates tzdata
+#19 5.912 Executing ca-certificates-20260611-r0.trigger
+#19 5.930 OK: 9178 KiB in 18 packages
+#19 DONE 6.0s
+
+#17 [backend builder 3/7] RUN apk add --no-cache git
+#17 6.144 ( 9/12) Installing libexpat (2.8.2-r0)
+#17 ...
+
+#20 [backend stage-1 3/4] WORKDIR /root/
+#20 DONE 0.1s
+
+#17 [backend builder 3/7] RUN apk add --no-cache git
+#17 6.369 (10/12) Installing pcre2 (10.47-r1)
+#17 6.650 (11/12) Installing git (2.54.0-r0)
+#17 7.796 (12/12) Installing git-init-template (2.54.0-r0)
+#17 8.011 Executing busybox-1.37.0-r31.trigger
+#17 8.019 OK: 21.5 MiB in 29 packages
+#17 DONE 9.3s
 
 #21 [frontend builder 5/6] COPY . .
-#21 ...
-
-#20 [backend builder 3/7] RUN apk add --no-cache git
-#20 5.571 (12/12) Installing git-init-template (2.54.0-r0)
-#20 5.588 Executing busybox-1.37.0-r31.trigger
-#20 5.591 OK: 21.5 MiB in 29 packages
-#20 DONE 5.7s
+#21 DONE 4.0s
 
 #22 [backend builder 4/7] COPY go.mod go.sum ./
-#22 DONE 0.2s
-
-#21 [frontend builder 5/6] COPY . .
-#21 DONE 4.3s
+#22 DONE 0.5s
 
 #23 [backend builder 5/7] RUN go mod download
 #23 ...
 
 #24 [frontend builder 6/6] RUN npm run build
-#24 0.300 
-#24 0.300 > frontend@0.0.1 build
-#24 0.300 > vite build
-#24 0.300 
-#24 1.082 svelte.config.js is ignored when options are passed via your Vite config
-#24 1.159 vite v8.2.1 building ssr environment for production...
-#24 1.182 [2Ktransforming...6:08:51 PM [vite-plugin-svelte] src/routes/(app)/albums/+page.svelte:316:6 Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
-#24 1.370 https://svelte.dev/e/a11y_click_events_have_key_events
-#24 1.370 314:         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-#24 1.370 315:           {#each albumPhotos as photo}
-#24 1.370 316:             <div class="aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer" onclick={() => openLightbox(albumPhotos.indexOf(photo))}>
-#24 1.370                        ^
-#24 1.370 317:               <img src={photo.thumbnail_url} alt={photo.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-#24 1.370 318:               <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent p-3 flex items-end">
-#24 1.370 6:08:51 PM [vite-plugin-svelte] src/routes/(app)/albums/+page.svelte:316:6 `<div>` with a click handler must have an ARIA role
-#24 1.370 https://svelte.dev/e/a11y_no_static_element_interactions
-#24 1.370 314:         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-#24 1.370 315:           {#each albumPhotos as photo}
-#24 1.370 316:             <div class="aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer" onclick={() => openLightbox(albumPhotos.indexOf(photo))}>
-#24 1.370                        ^
-#24 1.370 317:               <img src={photo.thumbnail_url} alt={photo.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-#24 1.370 318:               <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent p-3 flex items-end">
-#24 1.414 6:08:51 PM [vite-plugin-svelte] src/routes/(app)/gallery/+page.svelte:443:8 `<video>` elements must have a `<track kind="captions">`
-#24 1.414 https://svelte.dev/e/a11y_media_has_caption
-#24 1.414 441:             {#if photo.file_type === 'video' || photo.mime_type.startsWith('video/')}
-#24 1.414 442:               <div class="w-full h-full bg-slate-950 flex items-center justify-center relative">
-#24 1.414 443:                 <video src={photo.url} class="w-full h-full object-cover opacity-80" preload="metadata"></video>
-#24 1.414                                                                                                                      ^
-#24 1.414 444:                 <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center absolute">
-#24 1.414 445:                   <Play class="w-5 h-5 fill-white ml-0.5" />
-#24 1.414 6:08:51 PM [vite-plugin-svelte] src/routes/(app)/gallery/+page.svelte:631:5 `<video>` elements must have a `<track kind="captions">`
-#24 1.414 https://svelte.dev/e/a11y_media_has_caption
-#24 1.414 629:       <div class="flex-1 w-full h-full relative flex items-center justify-center p-0 overflow-hidden">
-#24 1.414 630:         {#if selectedPhoto.file_type === 'video' || selectedPhoto.mime_type.startsWith('video/')}
-#24 1.414 631:           <video src={selectedPhoto.url} controls autoplay class="w-full h-full object-contain"></video>
-#24 1.414                                                                                                              ^
-#24 1.414 632:         {:else}
-#24 1.414 633:           <img
-#24 1.474 6:08:51 PM [vite-plugin-svelte] src/routes/(app)/locked/+page.svelte:450:11 `<video>` elements must have a `<track kind="captions">`
-#24 1.474 https://svelte.dev/e/a11y_media_has_caption
-#24 1.474 448:                   <div class="aspect-4/3 rounded-xl overflow-hidden bg-slate-950 mb-2 relative flex items-center justify-center">
-#24 1.474 449:                     {#if media.file_type === 'video' || media.mime_type.startsWith('video/')}
-#24 1.474 450:                       <video src={media.url} controls class="w-full h-full object-cover"></video>
-#24 1.474                                                                                                       ^
-#24 1.474 451:                     {:else if media.file_type === 'document'}
-#24 1.474 452:                       <FileText class="w-8 h-8 text-sky-400" />
+#24 0.381 
+#24 0.381 > frontend@0.0.1 build
+#24 0.381 > vite build
+#24 0.381 
+#24 1.112 svelte.config.js is ignored when options are passed via your Vite config
+#24 1.197 vite v8.2.1 building ssr environment for production...
+#24 1.214 [2Ktransforming...6:07:10 PM [vite-plugin-svelte] src/routes/(app)/vault/+page.svelte:455:11 `<video>` elements must have a `<track kind="captions">`
+#24 1.377 https://svelte.dev/e/a11y_media_has_caption
+#24 1.377 453:                   <div class="aspect-4/3 rounded-xl overflow-hidden bg-slate-950 mb-2 relative flex items-center justify-center">
+#24 1.377 454:                     {#if media.file_type === 'video' || media.mime_type.startsWith('video/')}
+#24 1.377 455:                       <video src={media.url} controls class="w-full h-full object-cover"></video>
+#24 1.377                                                                                                       ^
+#24 1.377 456:                     {:else if media.file_type === 'document'}
+#24 1.377 457:                       <FileText class="w-8 h-8 text-sky-400" />
+#24 1.449 6:07:10 PM [vite-plugin-svelte] src/routes/(app)/albums/+page.svelte:317:6 Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+#24 1.449 https://svelte.dev/e/a11y_click_events_have_key_events
+#24 1.449 315:         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+#24 1.449 316:           {#each albumPhotos as photo}
+#24 1.449 317:             <div class="aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer" onclick={() => openLightbox(albumPhotos.indexOf(photo))}>
+#24 1.449                        ^
+#24 1.449 318:               <img src={photo.thumbnail_url} alt={photo.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+#24 1.449 319:               <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent p-3 flex items-end">
+#24 1.449 6:07:10 PM [vite-plugin-svelte] src/routes/(app)/albums/+page.svelte:317:6 `<div>` with a click handler must have an ARIA role
+#24 1.449 https://svelte.dev/e/a11y_no_static_element_interactions
+#24 1.449 315:         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+#24 1.449 316:           {#each albumPhotos as photo}
+#24 1.449 317:             <div class="aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer" onclick={() => openLightbox(albumPhotos.indexOf(photo))}>
+#24 1.449                        ^
+#24 1.449 318:               <img src={photo.thumbnail_url} alt={photo.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+#24 1.449 319:               <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent p-3 flex items-end">
+#24 1.518 6:07:11 PM [vite-plugin-svelte] src/routes/(app)/gallery/+page.svelte:444:9 `<video>` elements must have a `<track kind="captions">`
+#24 1.518 https://svelte.dev/e/a11y_media_has_caption
+#24 1.518 442:               {#if photo.file_type === 'video' || photo.mime_type.startsWith('video/')}
+#24 1.518 443:                 <div class="w-full h-full bg-slate-950 flex items-center justify-center relative">
+#24 1.518 444:                   <video src={photo.url} class="w-full h-full object-cover opacity-80" preload="metadata"></video>
+#24 1.518                                                                                                                        ^
+#24 1.518 445:                   <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center absolute">
+#24 1.518 446:                     <Play class="w-5 h-5 fill-white ml-0.5" />
+#24 1.518 6:07:11 PM [vite-plugin-svelte] src/routes/(app)/gallery/+page.svelte:633:5 `<video>` elements must have a `<track kind="captions">`
+#24 1.518 https://svelte.dev/e/a11y_media_has_caption
+#24 1.518 631:       <div class="flex-1 w-full h-full relative flex items-center justify-center p-0 overflow-hidden">
+#24 1.518 632:         {#if selectedPhoto.file_type === 'video' || selectedPhoto.mime_type.startsWith('video/')}
+#24 1.518 633:           <video src={selectedPhoto.url} controls autoplay class="w-full h-full object-contain"></video>
+#24 1.518                                                                                                              ^
+#24 1.518 634:         {:else}
+#24 1.518 635:           <img
+#24 5.570 ✓ 7589 modules transformed.
+#24 5.680 rendering chunks...
+#24 6.476 svelte.config.js is ignored when options are passed via your Vite config
+#24 6.593 svelte.config.js is ignored when options are passed via your Vite config
+#24 6.603 vite v8.2.1 building client environment for production...
+#24 6.610 [2Ktransforming...6:07:16 PM [vite-plugin-svelte] src/routes/(app)/albums/+page.svelte:317:6 Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+#24 6.697 https://svelte.dev/e/a11y_click_events_have_key_events
+#24 6.697 315:         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+#24 6.697 316:           {#each albumPhotos as photo}
+#24 6.697 317:             <div class="aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer" onclick={() => openLightbox(albumPhotos.indexOf(photo))}>
+#24 6.697                        ^
+#24 6.697 318:               <img src={photo.thumbnail_url} alt={photo.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+#24 6.697 319:               <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent p-3 flex items-end">
+#24 6.697 6:07:16 PM [vite-plugin-svelte] src/routes/(app)/albums/+page.svelte:317:6 `<div>` with a click handler must have an ARIA role
+#24 6.697 https://svelte.dev/e/a11y_no_static_element_interactions
+#24 6.697 315:         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+#24 6.697 316:           {#each albumPhotos as photo}
+#24 6.697 317:             <div class="aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer" onclick={() => openLightbox(albumPhotos.indexOf(photo))}>
+#24 6.697                        ^
+#24 6.697 318:               <img src={photo.thumbnail_url} alt={photo.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+#24 6.697 319:               <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent p-3 flex items-end">
+#24 6.755 6:07:16 PM [vite-plugin-svelte] src/routes/(app)/vault/+page.svelte:455:11 `<video>` elements must have a `<track kind="captions">`
+#24 6.755 https://svelte.dev/e/a11y_media_has_caption
+#24 6.755 453:                   <div class="aspect-4/3 rounded-xl overflow-hidden bg-slate-950 mb-2 relative flex items-center justify-center">
+#24 6.755 454:                     {#if media.file_type === 'video' || media.mime_type.startsWith('video/')}
+#24 6.755 455:                       <video src={media.url} controls class="w-full h-full object-cover"></video>
+#24 6.755                                                                                                       ^
+#24 6.755 456:                     {:else if media.file_type === 'document'}
+#24 6.755 457:                       <FileText class="w-8 h-8 text-sky-400" />
+#24 6.784 6:07:16 PM [vite-plugin-svelte] src/routes/(app)/gallery/+page.svelte:444:9 `<video>` elements must have a `<track kind="captions">`
+#24 6.784 https://svelte.dev/e/a11y_media_has_caption
+#24 6.785 442:               {#if photo.file_type === 'video' || photo.mime_type.startsWith('video/')}
+#24 6.785 443:                 <div class="w-full h-full bg-slate-950 flex items-center justify-center relative">
+#24 6.785 444:                   <video src={photo.url} class="w-full h-full object-cover opacity-80" preload="metadata"></video>
+#24 6.785                                                                                                                        ^
+#24 6.785 445:                   <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center absolute">
+#24 6.785 446:                     <Play class="w-5 h-5 fill-white ml-0.5" />
+#24 6.785 6:07:16 PM [vite-plugin-svelte] src/routes/(app)/gallery/+page.svelte:633:5 `<video>` elements must have a `<track kind="captions">`
+#24 6.785 https://svelte.dev/e/a11y_media_has_caption
+#24 6.785 631:       <div class="flex-1 w-full h-full relative flex items-center justify-center p-0 overflow-hidden">
+#24 6.785 632:         {#if selectedPhoto.file_type === 'video' || selectedPhoto.mime_type.startsWith('video/')}
+#24 6.785 633:           <video src={selectedPhoto.url} controls autoplay class="w-full h-full object-contain"></video>
+#24 6.785                                                                                                              ^
+#24 6.785 634:         {:else}
+#24 6.785 635:           <img
 #24 ...
 
 #23 [backend builder 5/7] RUN go mod download
-#23 DONE 8.9s
+#23 DONE 11.5s
 
 #25 [backend builder 6/7] COPY . .
-#25 DONE 0.3s
+#25 DONE 0.6s
 
 #24 [frontend builder 6/6] RUN npm run build
 #24 ...
@@ -198,223 +259,182 @@
 #26 ...
 
 #24 [frontend builder 6/6] RUN npm run build
-#24 7.177 ✓ 7589 modules transformed.
-#24 7.419 rendering chunks...
-#24 9.194 svelte.config.js is ignored when options are passed via your Vite config
-#24 9.392 svelte.config.js is ignored when options are passed via your Vite config
-#24 9.413 vite v8.2.1 building client environment for production...
-#24 9.424 [2Ktransforming...6:08:59 PM [vite-plugin-svelte] src/routes/(app)/albums/+page.svelte:316:6 Visible, non-interactive element `<div>` with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
-#24 9.600 https://svelte.dev/e/a11y_click_events_have_key_events
-#24 9.600 314:         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-#24 9.600 315:           {#each albumPhotos as photo}
-#24 9.600 316:             <div class="aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer" onclick={() => openLightbox(albumPhotos.indexOf(photo))}>
-#24 9.600                        ^
-#24 9.600 317:               <img src={photo.thumbnail_url} alt={photo.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-#24 9.600 318:               <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent p-3 flex items-end">
-#24 9.600 6:08:59 PM [vite-plugin-svelte] src/routes/(app)/albums/+page.svelte:316:6 `<div>` with a click handler must have an ARIA role
-#24 9.600 https://svelte.dev/e/a11y_no_static_element_interactions
-#24 9.600 314:         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-#24 9.600 315:           {#each albumPhotos as photo}
-#24 9.600 316:             <div class="aspect-4/3 rounded-2xl overflow-hidden bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-800 shadow-sm relative group cursor-pointer" onclick={() => openLightbox(albumPhotos.indexOf(photo))}>
-#24 9.600                        ^
-#24 9.600 317:               <img src={photo.thumbnail_url} alt={photo.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-#24 9.600 318:               <div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent p-3 flex items-end">
-#24 9.635 6:08:59 PM [vite-plugin-svelte] src/routes/(app)/locked/+page.svelte:450:11 `<video>` elements must have a `<track kind="captions">`
-#24 9.635 https://svelte.dev/e/a11y_media_has_caption
-#24 9.636 448:                   <div class="aspect-4/3 rounded-xl overflow-hidden bg-slate-950 mb-2 relative flex items-center justify-center">
-#24 9.636 449:                     {#if media.file_type === 'video' || media.mime_type.startsWith('video/')}
-#24 9.636 450:                       <video src={media.url} controls class="w-full h-full object-cover"></video>
-#24 9.636                                                                                                       ^
-#24 9.636 451:                     {:else if media.file_type === 'document'}
-#24 9.636 452:                       <FileText class="w-8 h-8 text-sky-400" />
-#24 9.679 6:08:59 PM [vite-plugin-svelte] src/routes/(app)/gallery/+page.svelte:443:8 `<video>` elements must have a `<track kind="captions">`
-#24 9.679 https://svelte.dev/e/a11y_media_has_caption
-#24 9.679 441:             {#if photo.file_type === 'video' || photo.mime_type.startsWith('video/')}
-#24 9.679 442:               <div class="w-full h-full bg-slate-950 flex items-center justify-center relative">
-#24 9.679 443:                 <video src={photo.url} class="w-full h-full object-cover opacity-80" preload="metadata"></video>
-#24 9.679                                                                                                                      ^
-#24 9.679 444:                 <div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center absolute">
-#24 9.679 445:                   <Play class="w-5 h-5 fill-white ml-0.5" />
-#24 9.680 6:08:59 PM [vite-plugin-svelte] src/routes/(app)/gallery/+page.svelte:631:5 `<video>` elements must have a `<track kind="captions">`
-#24 9.680 https://svelte.dev/e/a11y_media_has_caption
-#24 9.680 629:       <div class="flex-1 w-full h-full relative flex items-center justify-center p-0 overflow-hidden">
-#24 9.680 630:         {#if selectedPhoto.file_type === 'video' || selectedPhoto.mime_type.startsWith('video/')}
-#24 9.680 631:           <video src={selectedPhoto.url} controls autoplay class="w-full h-full object-contain"></video>
-#24 9.680                                                                                                              ^
-#24 9.680 632:         {:else}
-#24 9.680 633:           <img
-#24 20.17 ✓ 7610 modules transformed.
-#24 20.36 rendering chunks...
-#24 20.49 computing gzip size...
-#24 20.50 .svelte-kit/output/client/_app/version.json                        0.02 kB │ gzip:  0.04 kB
-#24 20.50 .svelte-kit/output/client/.vite/manifest.json                     11.26 kB │ gzip:  1.40 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/assets/2.3WkGP7yu.css     0.21 kB │ gzip:  0.15 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/assets/3.BpkYlH8Y.css     0.52 kB │ gzip:  0.22 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/assets/0.CiYjIKt8.css    76.22 kB │ gzip: 11.62 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/JYcD5LDi.js        0.02 kB │ gzip:  0.04 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/xihTtKlq.js        0.06 kB │ gzip:  0.08 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/entry/start.BIUaMeTH.js   0.08 kB │ gzip:  0.09 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/Ce3PbxYC.js        0.33 kB │ gzip:  0.18 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/11.CACjoO_k.js      0.35 kB │ gzip:  0.26 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/1.DvSQEgsp.js       0.37 kB │ gzip:  0.26 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/vt181ghj.js        0.40 kB │ gzip:  0.30 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/DXFuZ_xJ.js        0.40 kB │ gzip:  0.30 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/CnCzMnfM.js        0.41 kB │ gzip:  0.31 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/GKXp92Tl.js        0.41 kB │ gzip:  0.31 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/LEAnJyLq.js        0.42 kB │ gzip:  0.31 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/CS_p_ZgO.js        0.45 kB │ gzip:  0.33 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/DPLojMoS.js        0.45 kB │ gzip:  0.33 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/CoeOA0OS.js        0.46 kB │ gzip:  0.34 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/y8xghOv-.js        0.47 kB │ gzip:  0.33 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/B0Fltz7l.js        0.48 kB │ gzip:  0.34 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/CZJN_4Mb.js        0.49 kB │ gzip:  0.33 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/Cl_RSctx.js        0.51 kB │ gzip:  0.37 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/6WhPX42m.js        0.52 kB │ gzip:  0.36 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/BL4SlnK3.js        0.54 kB │ gzip:  0.35 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/B6jmFeBD.js        0.57 kB │ gzip:  0.41 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/DWJUxGDx.js        0.60 kB │ gzip:  0.38 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/jRJTfoF_.js        0.66 kB │ gzip:  0.33 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/KfvlehPs.js        0.72 kB │ gzip:  0.42 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/Bjy-W4x2.js        1.36 kB │ gzip:  0.65 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/CqAtFZYO.js        1.43 kB │ gzip:  0.85 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/0.CbbC02IX.js       2.41 kB │ gzip:  0.99 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/9.sMe13IVv.js       2.67 kB │ gzip:  1.42 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/6.DCgnuODI.js       3.30 kB │ gzip:  1.56 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/BzLjlyck.js        3.77 kB │ gzip:  1.57 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/5.qYzJfIMs.js       4.14 kB │ gzip:  1.77 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/entry/app.CVp471Ic.js     6.54 kB │ gzip:  2.58 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/3.HegPonSU.js      10.95 kB │ gzip:  3.66 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/8.9sK6ODNs.js      15.85 kB │ gzip:  4.77 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/2.D6df43zK.js      16.04 kB │ gzip:  5.53 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/4.CGofweE5.js      20.97 kB │ gzip:  5.78 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/7.hY0lIDQC.js      25.97 kB │ gzip:  7.75 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/BpQYc6gx.js       26.78 kB │ gzip: 10.35 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/nodes/10.D_HPJDb_.js     29.87 kB │ gzip:  7.15 kB
-#24 20.50 .svelte-kit/output/client/_app/immutable/chunks/DmS7emw8.js       54.91 kB │ gzip: 20.72 kB
-#24 20.50 
-#24 20.50 ✓ built in 11.09s
-#24 20.51 [33m[PLUGIN_TIMINGS] [0mYour build spent 97% of 11.1s inside plugin hooks (10.8s).
-#24 20.51 Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:
-#24 20.51   - vite-plugin-svelte:compile transform (55%, 6.1s, 3470 calls)
-#24 20.51   - vite-plugin-svelte:preprocess transform (12%, 1.3s, 3470 calls)
-#24 20.51 Those rows are 66% of the build; the rest of the 97% is below.
-#24 20.51 Not measurable — 1 hook whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:
-#24 20.51   - vite-plugin-sveltekit-guard resolveId (28659 calls)
-#24 20.51 See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
-#24 20.51 
-#24 22.06 svelte.config.js is ignored when options are passed via your Vite config
-#24 22.26 computing gzip size...
-#24 22.27 .svelte-kit/output/server/.vite/manifest.json                              8.52 kB │ gzip:  1.09 kB
-#24 22.27 .svelte-kit/output/server/_app/immutable/assets/_layout.3WkGP7yu.css       0.21 kB │ gzip:  0.15 kB
-#24 22.27 .svelte-kit/output/server/_app/immutable/assets/_page.BpkYlH8Y.css         0.52 kB │ gzip:  0.22 kB
-#24 22.27 .svelte-kit/output/server/_app/immutable/assets/_layout.BrQU44yQ.css      74.67 kB │ gzip: 11.57 kB
-#24 22.27 .svelte-kit/output/server/chunks/navigation.js                             0.03 kB │ gzip:  0.05 kB
-#24 22.27 .svelte-kit/output/server/env.js                                           0.22 kB │ gzip:  0.14 kB
-#24 22.27 .svelte-kit/output/server/chunks/env.js                                    0.28 kB │ gzip:  0.17 kB
-#24 22.27 .svelte-kit/output/server/internal.js                                      0.40 kB │ gzip:  0.20 kB
-#24 22.27 .svelte-kit/output/server/entries/fallbacks/error.svelte.js                0.42 kB │ gzip:  0.26 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/(app)/settings/_page.svelte.js     0.45 kB │ gzip:  0.27 kB
-#24 22.27 .svelte-kit/output/server/chunks/internal2.js                              0.87 kB │ gzip:  0.38 kB
-#24 22.27 .svelte-kit/output/server/chunks/state.js                                  2.47 kB │ gzip:  1.05 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/_layout.svelte.js                  2.58 kB │ gzip:  1.05 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/(app)/albums/_page.svelte.js       3.33 kB │ gzip:  1.18 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/(app)/locked/_page.svelte.js       3.41 kB │ gzip:  1.19 kB
-#24 22.27 .svelte-kit/output/server/chunks/client.js                                 4.45 kB │ gzip:  1.83 kB
-#24 22.27 .svelte-kit/output/server/chunks/state.svelte.js                           4.58 kB │ gzip:  1.73 kB
-#24 22.27 .svelte-kit/output/server/chunks/plus.js                                   4.85 kB │ gzip:  2.40 kB
-#24 22.27 .svelte-kit/output/server/chunks/clock.js                                  4.91 kB │ gzip:  2.45 kB
-#24 22.27 .svelte-kit/output/server/chunks/user.js                                   4.97 kB │ gzip:  2.49 kB
-#24 22.27 .svelte-kit/output/server/chunks/lock.js                                   5.02 kB │ gzip:  2.52 kB
-#24 22.27 .svelte-kit/output/server/chunks/calendar.js                               5.12 kB │ gzip:  2.53 kB
-#24 22.27 .svelte-kit/output/server/chunks/folder-closed.js                          5.16 kB │ gzip:  2.57 kB
-#24 22.27 .svelte-kit/output/server/chunks/image.js                                  5.20 kB │ gzip:  2.57 kB
-#24 22.27 .svelte-kit/output/server/chunks/trash-2.js                                5.22 kB │ gzip:  2.56 kB
-#24 22.27 .svelte-kit/output/server/chunks/file-text.js                              5.36 kB │ gzip:  2.61 kB
-#24 22.27 .svelte-kit/output/server/chunks/sparkles.js                               5.66 kB │ gzip:  2.76 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/(app)/memories/_page.svelte.js     7.63 kB │ gzip:  3.64 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/(app)/documents/_page.svelte.js    7.72 kB │ gzip:  3.44 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/(app)/bin/_page.svelte.js          7.97 kB │ gzip:  3.55 kB
-#24 22.27 .svelte-kit/output/server/chunks/shared.js                                10.59 kB │ gzip:  3.39 kB
-#24 22.27 .svelte-kit/output/server/chunks/exports.js                               11.36 kB │ gzip:  3.54 kB
-#24 22.27 .svelte-kit/output/server/chunks/Icon.js                                  12.99 kB │ gzip:  2.85 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/(app)/gallery/_page.svelte.js     20.42 kB │ gzip:  4.81 kB
-#24 22.27 .svelte-kit/output/server/chunks/internal.js                              26.81 kB │ gzip:  8.11 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/_page.svelte.js                   28.86 kB │ gzip:  5.85 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/(app)/_layout.svelte.js           31.28 kB │ gzip:  2.22 kB
-#24 22.27 .svelte-kit/output/server/chunks/utils.js                                 31.77 kB │ gzip:  9.35 kB
-#24 22.27 .svelte-kit/output/server/entries/pages/(app)/profile/_page.svelte.js     38.50 kB │ gzip:  5.81 kB
-#24 22.27 .svelte-kit/output/server/remote-entry.js                                 54.49 kB │ gzip: 12.02 kB
-#24 22.27 .svelte-kit/output/server/index.js                                       124.09 kB │ gzip: 31.47 kB
-#24 22.27 .svelte-kit/output/server/chunks/server.js                               132.39 kB │ gzip: 34.49 kB
-#24 22.27 
-#24 22.28 ✓ built in 21.12s
-#24 22.28 
-#24 22.28 Run npm run preview to preview your production build locally.
-#24 22.29 
-#24 22.29 > Using @sveltejs/adapter-node
-#24 23.40 Generated an empty chunk: "chunks/env.js".
-#24 23.56   ✔ done
-#24 23.57 [33m[PLUGIN_TIMINGS] [0mYour build spent 100% of 21.1s inside plugin hooks (22.0s).
-#24 23.57 Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:
-#24 23.57   - vite-plugin-sveltekit-compile writeBundle (69%, 14.6s, 1 call)
-#24 23.57   - vite-plugin-svelte:compile transform (15%, 3.1s, 3470 calls)
-#24 23.57   - vite-plugin-sveltekit-compile closeBundle (6%, 1.3s, 1 call)
-#24 23.57 Those rows are 90% of the build; the rest of the 100% is below.
-#24 23.57 Not measurable — 2 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:
-#24 23.57   - vite-plugin-sveltekit-guard resolveId (23410 calls)
-#24 23.57   - vite:css-post renderChunk (38 calls)
-#24 23.57 See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
-#24 23.57 
-#24 DONE 24.9s
+#24 12.69 ✓ 7610 modules transformed.
+#24 12.99 rendering chunks...
+#24 13.24 computing gzip size...
+#24 13.25 .svelte-kit/output/client/_app/version.json                        0.02 kB │ gzip:  0.04 kB
+#24 13.25 .svelte-kit/output/client/.vite/manifest.json                     11.26 kB │ gzip:  1.41 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/assets/2.3WkGP7yu.css     0.21 kB │ gzip:  0.15 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/assets/3.BpkYlH8Y.css     0.52 kB │ gzip:  0.22 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/assets/0.Epn_r67f.css    76.24 kB │ gzip: 11.62 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/DVPjYZKC.js        0.02 kB │ gzip:  0.04 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/xihTtKlq.js        0.06 kB │ gzip:  0.08 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/entry/start.CVgSfFnw.js   0.08 kB │ gzip:  0.09 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/DI2bk-K_.js        0.33 kB │ gzip:  0.18 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/10.DIHCiqUB.js      0.35 kB │ gzip:  0.26 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/1.DaeME6lx.js       0.37 kB │ gzip:  0.26 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/vt181ghj.js        0.40 kB │ gzip:  0.30 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/DXFuZ_xJ.js        0.40 kB │ gzip:  0.30 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/CnCzMnfM.js        0.41 kB │ gzip:  0.31 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/GKXp92Tl.js        0.41 kB │ gzip:  0.31 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/LEAnJyLq.js        0.42 kB │ gzip:  0.31 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/CS_p_ZgO.js        0.45 kB │ gzip:  0.33 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/DPLojMoS.js        0.45 kB │ gzip:  0.33 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/CoeOA0OS.js        0.46 kB │ gzip:  0.34 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/y8xghOv-.js        0.47 kB │ gzip:  0.33 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/B0Fltz7l.js        0.48 kB │ gzip:  0.34 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/CZJN_4Mb.js        0.49 kB │ gzip:  0.33 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/Cl_RSctx.js        0.51 kB │ gzip:  0.37 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/6WhPX42m.js        0.52 kB │ gzip:  0.36 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/BL4SlnK3.js        0.54 kB │ gzip:  0.35 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/B6jmFeBD.js        0.57 kB │ gzip:  0.41 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/DWJUxGDx.js        0.60 kB │ gzip:  0.38 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/jRJTfoF_.js        0.66 kB │ gzip:  0.33 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/KfvlehPs.js        0.72 kB │ gzip:  0.42 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/Bjy-W4x2.js        1.36 kB │ gzip:  0.65 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/CqAtFZYO.js        1.43 kB │ gzip:  0.85 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/0._UmkQgGm.js       2.41 kB │ gzip:  0.99 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/8.B26Xam_u.js       2.76 kB │ gzip:  1.44 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/6.kcYsCSzl.js       3.37 kB │ gzip:  1.59 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/5.CfDyQ_66.js       4.23 kB │ gzip:  1.82 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/3M75uqMb.js        5.04 kB │ gzip:  2.04 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/entry/app.C-p1yAa6.js     6.54 kB │ gzip:  2.58 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/3.B_uY6OEJ.js      10.95 kB │ gzip:  3.66 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/11.jYXMDrRD.js     15.80 kB │ gzip:  4.74 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/2.63KwXU6q.js      16.12 kB │ gzip:  5.55 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/4.B6zzmRdF.js      21.10 kB │ gzip:  5.82 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/7.repoLqn_.js      26.04 kB │ gzip:  7.76 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/D1lPc1Op.js       26.78 kB │ gzip: 10.35 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/nodes/9.BCvfGW_X.js      29.96 kB │ gzip:  7.18 kB
+#24 13.25 .svelte-kit/output/client/_app/immutable/chunks/DmS7emw8.js       54.91 kB │ gzip: 20.72 kB
+#24 13.25 
+#24 13.26 ✓ built in 6.66s
+#24 14.50 svelte.config.js is ignored when options are passed via your Vite config
+#24 14.64 computing gzip size...
+#24 14.64 .svelte-kit/output/server/.vite/manifest.json                              8.87 kB │ gzip:  1.10 kB
+#24 14.64 .svelte-kit/output/server/_app/immutable/assets/_layout.3WkGP7yu.css       0.21 kB │ gzip:  0.15 kB
+#24 14.64 .svelte-kit/output/server/_app/immutable/assets/_page.BpkYlH8Y.css         0.52 kB │ gzip:  0.22 kB
+#24 14.64 .svelte-kit/output/server/_app/immutable/assets/_layout.Dd55awmg.css      74.69 kB │ gzip: 11.57 kB
+#24 14.64 .svelte-kit/output/server/chunks/navigation.js                             0.03 kB │ gzip:  0.05 kB
+#24 14.64 .svelte-kit/output/server/env.js                                           0.22 kB │ gzip:  0.14 kB
+#24 14.64 .svelte-kit/output/server/chunks/env.js                                    0.28 kB │ gzip:  0.17 kB
+#24 14.64 .svelte-kit/output/server/internal.js                                      0.40 kB │ gzip:  0.19 kB
+#24 14.64 .svelte-kit/output/server/entries/fallbacks/error.svelte.js                0.42 kB │ gzip:  0.26 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/(app)/settings/_page.svelte.js     0.45 kB │ gzip:  0.27 kB
+#24 14.64 .svelte-kit/output/server/chunks/internal.js                               0.87 kB │ gzip:  0.38 kB
+#24 14.64 .svelte-kit/output/server/chunks/state.js                                  2.47 kB │ gzip:  1.05 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/_layout.svelte.js                  2.58 kB │ gzip:  1.05 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/(app)/vault/_page.svelte.js        3.39 kB │ gzip:  1.15 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/(app)/albums/_page.svelte.js       3.45 kB │ gzip:  1.21 kB
+#24 14.64 .svelte-kit/output/server/chunks/client.js                                 4.47 kB │ gzip:  1.83 kB
+#24 14.64 .svelte-kit/output/server/chunks/index-server.js                           4.55 kB │ gzip:  1.69 kB
+#24 14.64 .svelte-kit/output/server/chunks/plus.js                                   4.85 kB │ gzip:  2.40 kB
+#24 14.64 .svelte-kit/output/server/chunks/clock.js                                  4.91 kB │ gzip:  2.45 kB
+#24 14.64 .svelte-kit/output/server/chunks/user.js                                   4.97 kB │ gzip:  2.49 kB
+#24 14.64 .svelte-kit/output/server/chunks/lock.js                                   5.02 kB │ gzip:  2.52 kB
+#24 14.64 .svelte-kit/output/server/chunks/calendar.js                               5.12 kB │ gzip:  2.53 kB
+#24 14.64 .svelte-kit/output/server/chunks/folder-closed.js                          5.16 kB │ gzip:  2.57 kB
+#24 14.64 .svelte-kit/output/server/chunks/image.js                                  5.20 kB │ gzip:  2.57 kB
+#24 14.64 .svelte-kit/output/server/chunks/trash-2.js                                5.22 kB │ gzip:  2.56 kB
+#24 14.64 .svelte-kit/output/server/chunks/file-text.js                              5.36 kB │ gzip:  2.61 kB
+#24 14.64 .svelte-kit/output/server/chunks/sparkles.js                               5.66 kB │ gzip:  2.76 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/(app)/memories/_page.svelte.js     7.71 kB │ gzip:  3.66 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/(app)/documents/_page.svelte.js    7.84 kB │ gzip:  3.49 kB
+#24 14.64 .svelte-kit/output/server/chunks/state.svelte.js                           7.84 kB │ gzip:  2.91 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/(app)/bin/_page.svelte.js          8.09 kB │ gzip:  3.60 kB
+#24 14.64 .svelte-kit/output/server/chunks/shared.js                                10.59 kB │ gzip:  3.39 kB
+#24 14.64 .svelte-kit/output/server/chunks/exports.js                               11.36 kB │ gzip:  3.54 kB
+#24 14.64 .svelte-kit/output/server/chunks/Icon.js                                  12.99 kB │ gzip:  2.85 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/(app)/gallery/_page.svelte.js     20.54 kB │ gzip:  4.84 kB
+#24 14.64 .svelte-kit/output/server/chunks/internal2.js                             22.36 kB │ gzip:  6.75 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/_page.svelte.js                   28.86 kB │ gzip:  5.85 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/(app)/_layout.svelte.js           31.29 kB │ gzip:  2.22 kB
+#24 14.64 .svelte-kit/output/server/chunks/utils.js                                 31.77 kB │ gzip:  9.35 kB
+#24 14.64 .svelte-kit/output/server/entries/pages/(app)/profile/_page.svelte.js     38.62 kB │ gzip:  5.85 kB
+#24 14.64 .svelte-kit/output/server/remote-entry.js                                 54.49 kB │ gzip: 12.02 kB
+#24 14.64 .svelte-kit/output/server/index.js                                       124.09 kB │ gzip: 31.46 kB
+#24 14.64 .svelte-kit/output/server/chunks/server.js                               132.39 kB │ gzip: 34.49 kB
+#24 14.64 
+#24 14.65 ✓ built in 13.45s
+#24 14.65 
+#24 14.65 Run npm run preview to preview your production build locally.
+#24 14.66 
+#24 14.66 > Using @sveltejs/adapter-node
+#24 16.25 Generated an empty chunk: "chunks/env.js".
+#24 16.42   ✔ done
+#24 16.43 [33m[PLUGIN_TIMINGS] [0mYour build spent 100% of 13.4s inside plugin hooks (15.0s).
+#24 16.43 Measured inside the callback, so queue time is excluded and time the callback itself awaited is not:
+#24 16.43   - vite-plugin-sveltekit-compile writeBundle (66%, 8.9s, 1 call)
+#24 16.43   - vite-plugin-svelte:compile transform (18%, 2.5s, 3470 calls)
+#24 16.43   - @tailwindcss/vite:generate:build transform (15%, 2.0s, 3 calls)
+#24 16.43   - vite-plugin-sveltekit-compile closeBundle (13%, 1.8s, 1 call)
+#24 16.43 Those rows are 100% of the build; the rest of the 100% is below.
+#24 16.43 Not measurable — 2 hooks whose calls overlap, so elapsed time covers work other calls were doing. Profile with `node --cpu-prof`:
+#24 16.43   - vite-plugin-sveltekit-guard resolveId (23416 calls)
+#24 16.43   - vite:css-post renderChunk (39 calls)
+#24 16.43 See https://rolldown.rs/reference/InputOptions.checks#plugintimings for more details.
+#24 16.43 
+#24 DONE 17.3s
 
 #26 [backend builder 7/7] RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
-#26 DONE 20.8s
+#26 ...
 
-#27 [backend stage-1 4/4] COPY --from=builder /app/server .
-#27 DONE 0.1s
+#27 [frontend runner 3/7] COPY --from=builder /app/package.json ./
+#27 DONE 0.4s
 
-#28 [backend] exporting to image
-#28 exporting layers
-#28 exporting layers 0.7s done
-#28 exporting manifest sha256:2e6a8f11743debafe2db9358e9f830758c7fd6adf56d422dbe121dfdf4992ce5
-#28 exporting manifest sha256:2e6a8f11743debafe2db9358e9f830758c7fd6adf56d422dbe121dfdf4992ce5 0.0s done
-#28 exporting config sha256:8117ba6c87aca8bea3c45c96cd2cb6517ee3e7bd4146841667354aaaaaf75165 0.0s done
-#28 exporting attestation manifest sha256:0cf692678e195a1f9094551102979b8f54991cdd6197809ba1dff5d8e0c95ae3 0.0s done
-#28 exporting manifest list sha256:34c71725a62bafbd3cbf16775679f337c519cdd0913eb31fb53eddbaf84f87fb 0.0s done
-#28 naming to docker.io/library/docker-backend:latest done
-#28 unpacking to docker.io/library/docker-backend:latest
-#28 unpacking to docker.io/library/docker-backend:latest 0.2s done
-#28 DONE 1.0s
+#26 [backend builder 7/7] RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
+#26 ...
 
-#29 [backend] resolving provenance for metadata file
-#29 DONE 0.1s
+#28 [frontend runner 4/7] COPY --from=builder /app/package-lock.json ./
+#28 DONE 0.2s
 
-#30 [frontend runner 3/6] COPY --from=builder /app/package.json ./
-#30 DONE 0.1s
+#26 [backend builder 7/7] RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
+#26 ...
 
-#31 [frontend runner 4/6] COPY --from=builder /app/node_modules ./node_modules
-#31 DONE 1.0s
+#29 [frontend runner 5/7] RUN npm ci --omit=dev --ignore-scripts
+#29 6.312 npm warn deprecated lucide-svelte@1.0.1: Package deprecated. Please use @lucide/svelte instead.
+#29 6.377 
+#29 6.377 added 80 packages, and audited 81 packages in 6s
+#29 6.377 
+#29 6.377 16 packages are looking for funding
+#29 6.377   run `npm fund` for details
+#29 6.391 
+#29 6.391 5 low severity vulnerabilities
+#29 6.391 
+#29 6.391 To address issues that do not require attention, run:
+#29 6.391   npm audit fix
+#29 6.391 
+#29 6.391 To address all issues (including breaking changes), run:
+#29 6.391   npm audit fix --force
+#29 6.391 
+#29 6.391 Run `npm audit` for details.
+#29 6.393 npm notice
+#29 6.393 npm notice New major version of npm available! 10.8.2 -> 12.0.2
+#29 6.393 npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.0.2
+#29 6.393 npm notice To update run: npm install -g npm@12.0.2
+#29 6.393 npm notice
+#29 DONE 9.1s
 
-#32 [frontend runner 5/6] COPY --from=builder /app/build ./build
-#32 DONE 0.1s
+#26 [backend builder 7/7] RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
+#26 ...
 
-#33 [frontend runner 6/6] COPY --from=builder /app/static ./static
+#30 [frontend runner 6/7] COPY --from=builder /app/build ./build
+#30 DONE 0.3s
+
+#26 [backend builder 7/7] RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
+#26 ...
+
+#31 [frontend runner 7/7] COPY --from=builder /app/static ./static
+#31 DONE 0.1s
+
+#32 [frontend] exporting to image
+#32 exporting layers
+#32 ...
+
+#26 [backend builder 7/7] RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
+#26 DONE 18.2s
+
+#33 [backend stage-1 4/4] COPY --from=builder /app/server .
 #33 DONE 0.1s
 
-#34 [frontend] exporting to image
-#34 exporting layers 5.9s done
-#34 exporting manifest sha256:5c20c6ea1d021f96b7b054608661280f95871c13c94ddf94edbac6f10279aef2
-#34 exporting manifest sha256:5c20c6ea1d021f96b7b054608661280f95871c13c94ddf94edbac6f10279aef2 0.0s done
-#34 exporting config sha256:b269d726dcf7895b2e708976512fdf8752b4effe4e58555b667b2cf7c32361ba 0.0s done
-#34 exporting attestation manifest sha256:dd079a3f40a9ba4a23f08001fdda633b674df7f7446ba6d55947c8859aeda97d 0.0s done
-#34 exporting manifest list sha256:182f58acfee4db127608478b275029bde965be1c9c9ed1f923bb72bb51219fc5 0.0s done
-#34 naming to docker.io/library/docker-frontend:latest
-#34 naming to docker.io/library/docker-frontend:latest done
-#34 unpacking to docker.io/library/docker-frontend:latest
-#34 unpacking to docker.io/library/docker-frontend:latest 1.4s done
-#34 DONE 7.5s
-
-#35 [frontend] resolving provenance for metadata file
-#35 DONE 0.0s
- Image docker-backend Built 
- Image docker-frontend Built 
+#34 [backend] exporting to image

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
 	import { apiFetch } from '$lib/api';
 	import {
@@ -96,8 +97,7 @@
 		}
 	}
 
-	$effect(() => {
-		const v = appState.uploadVersion;
+	onMount(() => {
 		fetchPhotos();
 		fetchLockedFolders();
 	});

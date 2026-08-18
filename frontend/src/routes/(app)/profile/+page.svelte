@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { appState, type RegisteredUser, type LoginLog } from '$lib/state.svelte';
 	import { apiFetch } from '$lib/api';
 	import {
@@ -67,7 +68,7 @@
 		}
 	}
 
-	$effect(() => {
+	onMount(() => {
 		if (appState.user.role === 'Administrator') {
 			fetchUsers();
 			fetchAuditLogs();

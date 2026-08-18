@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
 	import { apiFetch } from '$lib/api';
 	import { FileText, Download, Trash2, ExternalLink } from 'lucide-svelte';
@@ -35,8 +36,7 @@
 		}
 	}
 
-	$effect(() => {
-		const v = appState.uploadVersion;
+	onMount(() => {
 		fetchDocuments();
 	});
 

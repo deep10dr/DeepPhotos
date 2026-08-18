@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
 	import { apiFetch } from '$lib/api';
 	import { Lock, Unlock, Key, ShieldCheck, FolderClosed, Plus, X, Trash2, User, Clock, AlertCircle, FileText, Image as ImageIcon, Video, Play, Download } from 'lucide-svelte';
@@ -77,7 +78,7 @@
 		}
 	}
 
-	$effect(() => {
+	onMount(() => {
 		fetchLockedFolders();
 	});
 
