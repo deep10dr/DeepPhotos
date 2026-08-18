@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
-	import { apiFetch } from '$lib/api';
+	import { apiFetch, getMediaUrl } from '$lib/api';
 	import {
 		Image as ImageIcon,
 		Heart,
@@ -75,8 +75,8 @@
 				const data: PhotoItem[] = await res.json();
 				photos = data.filter(p => !p.locked_folder_id).map(p => ({
 					...p,
-					url: `${appState.apiBaseUrl}/api/photos/${p.id}/file`,
-					thumbnail_url: `${appState.apiBaseUrl}/api/photos/${p.id}/thumbnail`
+					url: getMediaUrl(`/api/photos/${p.id}/file`),
+					thumbnail_url: getMediaUrl(`/api/photos/${p.id}/thumbnail`)
 				}));
 			}
 		} catch (e) {
@@ -453,7 +453,12 @@
 									class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
 									onerror={(e) => {
 										const img = e.currentTarget as HTMLImageElement;
-										img.src = photo.url || '';
+										img.onerror = null;
+										if (photo.url && img.src !== photo.url) {
+											img.src = photo.url;
+										} else {
+											img.src = '/empty-folder.png';
+										}
 									}}
 								/>
 							{/if}

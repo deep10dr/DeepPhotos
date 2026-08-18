@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
-	import { apiFetch } from '$lib/api';
+	import { apiFetch, getMediaUrl } from '$lib/api';
 	import { Lock, Unlock, Key, ShieldCheck, FolderClosed, Plus, X, Trash2, User, Clock, AlertCircle, FileText, Image as ImageIcon, Video, Play, Download } from 'lucide-svelte';
 
 	interface LockedFolder {
@@ -67,8 +67,8 @@
 				const data = await res.json();
 				lockedMediaItems = data.map((item: any) => ({
 					...item,
-					url: `${appState.apiBaseUrl}/api/photos/${item.id}/file`,
-					thumbnail_url: `${appState.apiBaseUrl}/api/photos/${item.id}/thumbnail`
+					url: getMediaUrl(`/api/photos/${item.id}/file`),
+					thumbnail_url: getMediaUrl(`/api/photos/${item.id}/thumbnail`)
 				}));
 			}
 		} catch (e) {

@@ -8,6 +8,26 @@
 
 import { appState } from '$lib/state.svelte';
 
+/**
+ * Returns an authenticated media URL with ?token=... appended so browser
+ * <img> and <video> elements can load protected media files without 401 errors.
+ */
+export function getMediaUrl(path: string): string {
+	if (!path) return '';
+	if (path.startsWith('http://') || path.startsWith('https://')) {
+		return path;
+	}
+	const token = typeof localStorage !== 'undefined'
+		? localStorage.getItem('deepphotos_token') || ''
+		: '';
+	const base = `${appState.apiBaseUrl}${path}`;
+	if (token) {
+		const separator = base.includes('?') ? '&' : '?';
+		return `${base}${separator}token=${encodeURIComponent(token)}`;
+	}
+	return base;
+}
+
 // ─── Cache Store ─────────────────────────────────────────────────────────────
 
 interface CacheEntry {

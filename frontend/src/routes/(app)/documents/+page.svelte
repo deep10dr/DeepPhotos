@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
-	import { apiFetch } from '$lib/api';
+	import { apiFetch, getMediaUrl } from '$lib/api';
 	import { FileText, Download, Trash2, ExternalLink } from 'lucide-svelte';
 
 	interface DocumentItem {
@@ -26,7 +26,7 @@
 				const data: DocumentItem[] = await res.json();
 				docs = data.map(d => ({
 					...d,
-					url: `${appState.apiBaseUrl}/api/photos/${d.id}/file`
+					url: getMediaUrl(`/api/photos/${d.id}/file`)
 				}));
 			}
 		} catch (e) {

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
-	import { apiFetch } from '$lib/api';
+	import { apiFetch, getMediaUrl } from '$lib/api';
 	import { FolderClosed, Plus, Image as ImageIcon, X, Trash2, ArrowLeft, CheckCircle2, Check, PlusCircle, Lock, ChevronLeft, ChevronRight, ShieldCheck, AlertCircle } from 'lucide-svelte';
 
 	interface Album {
@@ -160,7 +160,7 @@
 				availablePhotos = data.map((p: any) => ({
 					id: p.id,
 					title: p.title,
-					thumbnail_url: `${appState.apiBaseUrl}/api/photos/${p.id}/thumbnail`
+					thumbnail_url: getMediaUrl(`/api/photos/${p.id}/thumbnail`)
 				}));
 			}
 		} catch (e) {
