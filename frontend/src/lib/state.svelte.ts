@@ -1,4 +1,5 @@
 // Svelte 5 state module for authentication, theme mode, user management, and login history
+import { apiFetch, clearAllCache } from '$lib/api';
 
 export interface RegisteredUser {
   id: string;
@@ -58,6 +59,22 @@ export class AppState {
     this.uploadVersion++;
   }
 
+  getToken(): string {
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem('deepphotos_token') || '';
+    }
+    return '';
+  }
+
+  authFetch(input: RequestInfo, init?: RequestInit): Promise<Response> {
+    const token = this.getToken();
+    const headers = new Headers(init?.headers);
+    if (token) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    return fetch(input, { ...init, headers });
+  }
+
   async login(email?: string, password?: string): Promise<boolean> {
     const targetEmail = email || this.user.email;
     const targetPassword = password || 'deepphotos2026';
@@ -96,6 +113,7 @@ export class AppState {
     if (typeof localStorage !== 'undefined') {
       localStorage.removeItem('deepphotos_token');
     }
+    clearAllCache();
     this.isAuthenticated = false;
   }
 
@@ -116,7 +134,7 @@ export class AppState {
 
   async addUser(newUser: Omit<RegisteredUser, 'id' | 'lastLogin'>) {
     try {
-      const res = await fetch(`${this.apiBaseUrl}/api/users`, {
+      const res = await apiFetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newUser)
@@ -140,7 +158,7 @@ export class AppState {
 
   async deleteUser(userId: string) {
     try {
-      await fetch(`${this.apiBaseUrl}/api/users/${userId}`, { method: 'DELETE' });
+      await apiFetch(`/api/users/${userId}`, { method: 'DELETE' });
     } catch (e) {
       console.warn('API error deleting user:', e);
     }

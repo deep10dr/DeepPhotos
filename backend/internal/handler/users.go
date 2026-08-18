@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"deepphotos/backend/internal/middleware"
 	"deepphotos/backend/internal/model"
 	"deepphotos/backend/internal/repository"
 	"github.com/go-chi/chi/v5"
@@ -84,6 +85,17 @@ func (h *UsersHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *UsersHandler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+	
+	callerID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	callerRole, _ := r.Context().Value(middleware.UserRoleKey).(string)
+
+	if callerRole != "Administrator" && callerID != id {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: "Forbidden: You can only change your own password"})
+		return
+	}
+
 	var req model.ChangePasswordRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.NewPassword == "" {
 		w.Header().Set("Content-Type", "application/json")
@@ -134,6 +146,17 @@ func (h *UsersHandler) ChangeRole(w http.ResponseWriter, r *http.Request) {
 
 func (h *UsersHandler) Update(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
+
+	callerID, _ := r.Context().Value(middleware.UserIDKey).(string)
+	callerRole, _ := r.Context().Value(middleware.UserRoleKey).(string)
+
+	if callerRole != "Administrator" && callerID != id {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: "Forbidden: You can only update your own profile"})
+		return
+	}
+
 	user, err := h.userRepo.FindByID(id)
 	if err != nil || user == nil {
 		w.Header().Set("Content-Type", "application/json")
@@ -156,7 +179,7 @@ func (h *UsersHandler) Update(w http.ResponseWriter, r *http.Request) {
 	if req.Email != "" {
 		user.Email = req.Email
 	}
-	if req.Role != "" {
+	if req.Role != "" && callerRole == "Administrator" {
 		user.Role = req.Role
 	}
 	if req.Status != "" {

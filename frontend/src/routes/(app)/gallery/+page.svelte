@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { appState } from '$lib/state.svelte';
+	import { apiFetch } from '$lib/api';
 	import {
 		Image as ImageIcon,
 		Heart,
@@ -68,7 +69,7 @@
 	async function fetchPhotos() {
 		isLoading = true;
 		try {
-			const res = await fetch(`${appState.apiBaseUrl}/api/photos?deleted=false`);
+			const res = await apiFetch('/api/photos?deleted=false');
 			if (res.ok) {
 				const data: PhotoItem[] = await res.json();
 				photos = data.filter(p => !p.locked_folder_id).map(p => ({
@@ -86,7 +87,7 @@
 
 	async function fetchLockedFolders() {
 		try {
-			const res = await fetch(`${appState.apiBaseUrl}/api/locked-folders`);
+			const res = await apiFetch('/api/locked-folders');
 			if (res.ok) {
 				lockedFolders = await res.json();
 			}
@@ -166,7 +167,7 @@
 		const updatedState = !photo.is_favorite;
 		photo.is_favorite = updatedState;
 		try {
-			await fetch(`${appState.apiBaseUrl}/api/photos/${photo.id}`, {
+			await apiFetch(`/api/photos/${photo.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ is_favorite: updatedState })
@@ -181,7 +182,7 @@
 		if (!confirm(`Move "${photo.title}" to bin?`)) return;
 
 		try {
-			await fetch(`${appState.apiBaseUrl}/api/photos/${photo.id}`, {
+			await apiFetch(`/api/photos/${photo.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ is_deleted: true })
@@ -210,7 +211,7 @@
 		vaultError = '';
 
 		try {
-			const verifyRes = await fetch(`${appState.apiBaseUrl}/api/locked-folders/${selectedVaultFolderId}/verify`, {
+			const verifyRes = await apiFetch(`/api/locked-folders/${selectedVaultFolderId}/verify`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ passcode: vaultPasscode })
@@ -221,7 +222,7 @@
 				return;
 			}
 
-			const updateRes = await fetch(`${appState.apiBaseUrl}/api/photos/${selectedPhoto.id}`, {
+			const updateRes = await apiFetch(`/api/photos/${selectedPhoto.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ locked_folder_id: selectedVaultFolderId })
@@ -255,35 +256,71 @@
 		if (e.key === 'Escape') closePhoto();
 	}
 
-	// Drag & Drop external images state
+	// Drag & Drop — tracks nested enter/leave to prevent flicker
 	let isDraggingExternal = $state(false);
 	let isUploadingExternal = $state(false);
+	let dragCounter = 0;
+
+	function handleDragEnter(e: DragEvent) {
+		e.preventDefault();
+		dragCounter++;
+		if (dragCounter === 1) {
+			isDraggingExternal = true;
+		}
+	}
 
 	function handleDragOver(e: DragEvent) {
 		e.preventDefault();
-		if (e.dataTransfer?.types.includes('text/html') || e.dataTransfer?.types.includes('text/uri-list') || e.dataTransfer?.types.includes('text/plain')) {
-			isDraggingExternal = true;
+		if (e.dataTransfer) {
+			e.dataTransfer.dropEffect = 'copy';
 		}
 	}
 
 	function handleDragLeave(e: DragEvent) {
 		e.preventDefault();
-		// If leaving the window or moving out of main area
-		if (e.clientX === 0 && e.clientY === 0) {
+		dragCounter--;
+		if (dragCounter <= 0) {
+			dragCounter = 0;
 			isDraggingExternal = false;
 		}
 	}
 
 	async function handleDrop(e: DragEvent) {
 		e.preventDefault();
+		dragCounter = 0;
 		isDraggingExternal = false;
 
 		const dt = e.dataTransfer;
 		if (!dt) return;
 
+		// 1. LOCAL FILES — user dragged files from their file system
+		if (dt.files && dt.files.length > 0) {
+			isUploadingExternal = true;
+			try {
+				const formData = new FormData();
+				for (const file of Array.from(dt.files)) {
+					formData.append('files', file);
+				}
+				const res = await apiFetch('/api/photos/upload', {
+					method: 'POST',
+					body: formData
+				});
+				if (res.ok) {
+					await fetchPhotos();
+				} else {
+					console.error('Upload failed:', await res.text());
+				}
+			} catch (err) {
+				console.error('Drop upload error:', err);
+			} finally {
+				isUploadingExternal = false;
+			}
+			return;
+		}
+
+		// 2. EXTERNAL URL — user dragged an image from another browser tab
 		let urlToUpload = '';
 
-		// 1. HTML Image tag extraction
 		const html = dt.getData('text/html');
 		if (html) {
 			const match = html.match(/src="([^"]+)"/);
@@ -292,32 +329,30 @@
 			}
 		}
 
-		// 2. URI List
 		if (!urlToUpload) {
 			const uriList = dt.getData('text/uri-list');
 			if (uriList && uriList.startsWith('http')) {
-				urlToUpload = uriList.split('\n')[0];
+				urlToUpload = uriList.split('\n')[0].trim();
 			}
 		}
 
-		// 3. Plain text URL
 		if (!urlToUpload) {
 			const plain = dt.getData('text/plain');
 			if (plain && plain.startsWith('http')) {
-				urlToUpload = plain;
+				urlToUpload = plain.trim();
 			}
 		}
 
 		if (urlToUpload) {
 			isUploadingExternal = true;
 			try {
-				const res = await fetch(`${appState.apiBaseUrl}/api/photos/upload-url`, {
+				const res = await apiFetch('/api/photos/upload-url', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ url: urlToUpload })
 				});
 				if (res.ok) {
-					fetchPhotos();
+					await fetchPhotos();
 				} else {
 					alert('Failed to import image from URL.');
 				}
@@ -333,12 +368,12 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div role="region" aria-label="Gallery Dropzone" class="space-y-6 animate-fade-in" ondragover={handleDragOver} ondragleave={handleDragLeave} ondrop={handleDrop}>
-	
+<div role="region" aria-label="Gallery Dropzone" class="h-full flex flex-col gap-6 animate-fade-in" ondragenter={handleDragEnter} ondragover={handleDragOver} ondragleave={handleDragLeave} ondrop={handleDrop}>
+
 	<!-- Header Bar -->
-	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
 		<div>
-			<h1 class="text-2xl font-bold text-slate-900 dark:text-white">Media Vault & Gallery</h1>
+			<h1 class="text-2xl font-bold text-slate-900 dark:text-white">Gallery</h1>
 			<p class="text-xs text-slate-500 dark:text-slate-400">Timeline view of your private photo & video storage</p>
 		</div>
 
@@ -384,86 +419,88 @@
 		</div>
 	</div>
 
-	<!-- Empty State when no photos exist -->
-	{#if !isLoading && filteredPhotos.length === 0}
-		<div class="p-12 text-center rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm max-w-md mx-auto my-12 space-y-3">
-			<div class="text-5xl mb-2">🖼️✨</div>
-			<h3 class="text-base font-bold text-slate-900 dark:text-white">No media in gallery</h3>
-			<p class="text-xs text-slate-500 dark:text-slate-400">Drag & drop files anywhere or click <strong class="text-sky-500">Upload</strong> in header!</p>
-		</div>
-	{:else}
-		<!-- Media Grid -->
-		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
-			{#each filteredPhotos as photo, index}
-				<div
-					role="button"
-					tabindex="0"
-					onclick={() => openPhoto(index)}
-					onkeydown={(e) => e.key === 'Enter' && openPhoto(index)}
-					class="group relative rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
-				>
-					<div class="aspect-4/3 overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
-						{#if photo.file_type === 'video' || photo.mime_type.startsWith('video/')}
-							<div class="w-full h-full bg-slate-950 flex items-center justify-center relative">
-								<video src={photo.url} class="w-full h-full object-cover opacity-80" preload="metadata"></video>
-								<div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center absolute">
-									<Play class="w-5 h-5 fill-white ml-0.5" />
+	<div class="flex-1 overflow-y-auto min-h-0">
+		<!-- Empty State when no photos exist -->
+		{#if !isLoading && filteredPhotos.length === 0}
+			<div class="p-12 text-center rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm max-w-md mx-auto my-12 space-y-3">
+				<img src="/empty-folder.png" alt="Empty" class="w-20 h-20 mx-auto mb-4 opacity-60 dark:opacity-40 select-none pointer-events-none drop-shadow-sm" />
+				<h3 class="text-base font-bold text-slate-900 dark:text-white">No media in gallery</h3>
+				<p class="text-xs text-slate-500 dark:text-slate-400">Drag & drop files anywhere or click <strong class="text-sky-500">Upload</strong> in header!</p>
+			</div>
+		{:else}
+			<!-- Media Grid -->
+			<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6">
+				{#each filteredPhotos as photo, index}
+					<div
+						role="button"
+						tabindex="0"
+						onclick={() => openPhoto(index)}
+						onkeydown={(e) => e.key === 'Enter' && openPhoto(index)}
+						class="group relative rounded-2xl overflow-hidden bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm hover:shadow-md transition-all duration-300 cursor-pointer"
+					>
+						<div class="aspect-4/3 overflow-hidden bg-slate-100 dark:bg-slate-800 relative">
+							{#if photo.file_type === 'video' || photo.mime_type.startsWith('video/')}
+								<div class="w-full h-full bg-slate-950 flex items-center justify-center relative">
+									<video src={photo.url} class="w-full h-full object-cover opacity-80" preload="metadata"></video>
+									<div class="w-10 h-10 rounded-full bg-white/20 backdrop-blur-md text-white flex items-center justify-center absolute">
+										<Play class="w-5 h-5 fill-white ml-0.5" />
+									</div>
+								</div>
+							{:else}
+								<img
+									src={photo.thumbnail_url}
+									alt={photo.title}
+									class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+									onerror={(e) => {
+										const img = e.currentTarget as HTMLImageElement;
+										img.src = photo.url || '';
+									}}
+								/>
+							{/if}
+
+							<div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
+								<div class="text-white max-w-[65%]">
+									<p class="text-xs font-bold truncate">{photo.title}</p>
+									<p class="text-[10px] text-slate-300 truncate">{photo.taken_at || 'Recently'} • {formatBytes(photo.size)}</p>
+								</div>
+
+								<div class="flex items-center gap-1.5">
+									<button
+										type="button"
+										onclick={(e) => toggleFavorite(photo, e)}
+										class="p-1.5 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-colors"
+									>
+										<Heart class={`w-4 h-4 ${photo.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-white'}`} />
+									</button>
+									<button
+										type="button"
+										onclick={(e) => deletePhoto(photo, e)}
+										class="p-1.5 rounded-full bg-white/20 hover:bg-rose-500/80 text-white backdrop-blur-md transition-colors"
+									>
+										<Trash2 class="w-4 h-4" />
+									</button>
 								</div>
 							</div>
-						{:else}
-							<img
-								src={photo.thumbnail_url}
-								alt={photo.title}
-								class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-								onerror={(e) => {
-									const img = e.currentTarget as HTMLImageElement;
-									img.src = photo.url || '';
-								}}
-							/>
-						{/if}
 
-						<div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
-							<div class="text-white max-w-[65%]">
-								<p class="text-xs font-bold truncate">{photo.title}</p>
-								<p class="text-[10px] text-slate-300 truncate">{photo.taken_at || 'Recently'} • {formatBytes(photo.size)}</p>
-							</div>
-
-							<div class="flex items-center gap-1.5">
-								<button
-									type="button"
-									onclick={(e) => toggleFavorite(photo, e)}
-									class="p-1.5 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-colors"
-								>
-									<Heart class={`w-4 h-4 ${photo.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-white'}`} />
-								</button>
-								<button
-									type="button"
-									onclick={(e) => deletePhoto(photo, e)}
-									class="p-1.5 rounded-full bg-white/20 hover:bg-rose-500/80 text-white backdrop-blur-md transition-colors"
-								>
-									<Trash2 class="w-4 h-4" />
-								</button>
-							</div>
+							{#if photo.is_favorite}
+								<div class="absolute top-3 right-3 p-1.5 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-rose-500 shadow-sm">
+									<Heart class="w-3.5 h-3.5 fill-rose-500" />
+								</div>
+							{/if}
 						</div>
-
-						{#if photo.is_favorite}
-							<div class="absolute top-3 right-3 p-1.5 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-rose-500 shadow-sm">
-								<Heart class="w-3.5 h-3.5 fill-rose-500" />
-							</div>
-						{/if}
 					</div>
-				</div>
-			{/each}
-		</div>
-	{/if}
+				{/each}
+			</div>
+		{/if}
+	</div>
 
 	{#if selectedPhoto && selectedIndex !== null}
 		<!-- GOOGLE PHOTOS FULL-SCREEN THEATER MODE (Z-INDEX 100 PREVENTS ANY OVERFLOW OR CLASHING) -->
 		<div class="fixed inset-0 z-[100] w-screen h-screen bg-black/95 backdrop-blur-xl flex flex-col select-none overflow-hidden animate-fade-in">
-			
+
 			<!-- TOP GOOGLE PHOTOS NAVIGATION OVERLAY TOOLBAR (Z-INDEX 110) -->
 			<div class="absolute top-0 left-0 right-0 z-[110] p-4 flex items-center justify-between pointer-events-none">
-				
+
 				<!-- Left: Back Arrow, Title & Counter -->
 				<div class="flex items-center gap-3 pointer-events-auto bg-black/40 backdrop-blur-md pl-2 pr-4 py-2 rounded-full border border-white/10">
 					<button
@@ -487,7 +524,7 @@
 
 				<!-- Right Action Buttons: Zoom, Favorite, Move to Vault, Details Info, Download, Trash, Close -->
 				<div class="flex items-center gap-1.5 sm:gap-2 pointer-events-auto bg-black/40 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/10">
-					
+
 					{#if selectedPhoto.file_type !== 'video' && !selectedPhoto.mime_type.startsWith('video/')}
 						<button
 							type="button"

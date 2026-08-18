@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { appState } from '$lib/state.svelte';
+	import { apiFetch } from '$lib/api';
 	import { Trash2, RotateCcw, Image as ImageIcon } from 'lucide-svelte';
 
 	interface DeletedPhoto {
@@ -16,7 +17,7 @@
 	async function fetchBinItems() {
 		isLoading = true;
 		try {
-			const res = await fetch(`${appState.apiBaseUrl}/api/photos?deleted=true`);
+			const res = await apiFetch('/api/photos?deleted=true');
 			if (res.ok) {
 				binnedItems = await res.json();
 			}
@@ -33,7 +34,7 @@
 
 	async function restoreItem(id: string) {
 		try {
-			await fetch(`${appState.apiBaseUrl}/api/photos/batch-restore`, {
+			await apiFetch('/api/photos/batch-restore', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ ids: [id] })
@@ -51,7 +52,7 @@
 
 		const ids = binnedItems.map(item => item.id);
 		try {
-			await fetch(`${appState.apiBaseUrl}/api/photos/batch-delete`, {
+			await apiFetch('/api/photos/batch-delete', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ ids })
@@ -72,8 +73,8 @@
 	}
 </script>
 
-<div class="space-y-6 animate-fade-in">
-	<div class="flex items-center justify-between">
+<div class="h-full flex flex-col gap-6 animate-fade-in">
+	<div class="flex items-center justify-between shrink-0">
 		<div>
 			<h1 class="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
 				<Trash2 class="w-6 h-6 text-rose-500" />
@@ -91,36 +92,38 @@
 		</button>
 	</div>
 
-	{#if !isLoading && binnedItems.length === 0}
-		<div class="p-12 text-center rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm max-w-md mx-auto my-12 space-y-3">
-			<div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-500 flex items-center justify-center mx-auto">
-				<Trash2 class="w-6 h-6" />
-			</div>
-			<h3 class="text-base font-bold text-slate-900 dark:text-white">Bin is empty</h3>
-			<p class="text-xs text-slate-500 dark:text-slate-400">Deleted photos will appear here before permanent purging.</p>
-		</div>
-	{:else}
-		<div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
-			{#each binnedItems as item}
-				<div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 flex items-center justify-between">
-					<div class="flex items-center gap-3">
-						<div class="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center">
-							<ImageIcon class="w-5 h-5" />
-						</div>
-						<div>
-							<p class="text-xs font-bold text-slate-800 dark:text-white">{item.title || item.filename}</p>
-							<p class="text-[11px] text-slate-400">Deleted {item.updated_at || 'Recently'} • {formatBytes(item.size)}</p>
-						</div>
-					</div>
-					<button
-						type="button"
-						onclick={() => restoreItem(item.id)}
-						class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-300 dark:hover:border-sky-700 text-xs font-semibold flex items-center gap-1 cursor-pointer"
-					>
-						<RotateCcw class="w-3.5 h-3.5" /> Restore
-					</button>
+	<div class="flex-1 overflow-y-auto min-h-0">
+		{#if !isLoading && binnedItems.length === 0}
+			<div class="p-12 text-center rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm max-w-md mx-auto my-12 space-y-3">
+				<div class="w-12 h-12 rounded-2xl bg-rose-100 dark:bg-rose-950 text-rose-500 flex items-center justify-center mx-auto">
+					<Trash2 class="w-6 h-6" />
 				</div>
-			{/each}
-		</div>
-	{/if}
+				<h3 class="text-base font-bold text-slate-900 dark:text-white">Bin is empty</h3>
+				<p class="text-xs text-slate-500 dark:text-slate-400">Deleted photos will appear here before permanent purging.</p>
+			</div>
+		{:else}
+			<div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3">
+				{#each binnedItems as item}
+					<div class="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700 flex items-center justify-between">
+						<div class="flex items-center gap-3">
+							<div class="w-10 h-10 rounded-lg bg-rose-100 dark:bg-rose-950 text-rose-600 dark:text-rose-400 flex items-center justify-center">
+								<ImageIcon class="w-5 h-5" />
+							</div>
+							<div>
+								<p class="text-xs font-bold text-slate-800 dark:text-white">{item.title || item.filename}</p>
+								<p class="text-[11px] text-slate-400">Deleted {item.updated_at || 'Recently'} • {formatBytes(item.size)}</p>
+							</div>
+						</div>
+						<button
+							type="button"
+							onclick={() => restoreItem(item.id)}
+							class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-sky-600 dark:hover:text-sky-400 hover:border-sky-300 dark:hover:border-sky-700 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+						>
+							<RotateCcw class="w-3.5 h-3.5" /> Restore
+						</button>
+					</div>
+				{/each}
+			</div>
+		{/if}
+	</div>
 </div>

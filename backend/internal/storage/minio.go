@@ -3,6 +3,7 @@ package storage
 import (
 	"bytes"
 	"context"
+	"deepphotos/backend/internal/config"
 	"fmt"
 	"io"
 	"log"
@@ -11,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"deepphotos/backend/internal/config"
 	"github.com/google/uuid"
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"

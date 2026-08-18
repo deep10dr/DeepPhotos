@@ -15,12 +15,13 @@
 		ChevronRight,
 		LogOut
 	} from 'lucide-svelte';
+    import { Cloud } from '@lucide/svelte';
 
 	const navItems = [
 		{ name: 'Gallery', path: '/gallery', icon: ImageIcon },
 		{ name: 'Memories', path: '/memories', icon: Sparkles },
 		{ name: 'Albums', path: '/albums', icon: FolderClosed },
-		{ name: 'Locked', path: '/locked', icon: Lock },
+		{ name: 'Vault', path: '/vault', icon: Lock },
 		{ name: 'Documents', path: '/documents', icon: FileText },
 		{ name: 'Bin', path: '/bin', icon: Trash2 }
 	];
@@ -33,7 +34,7 @@
 	}
 </script>
 
-<aside 
+<aside
 	class={`h-screen bg-white/90 dark:bg-slate-900/95 border-r border-sky-100 dark:border-slate-800 flex flex-col justify-between transition-all duration-300 relative z-30 shadow-sm ${
 		appState.isSidebarCollapsed ? 'w-20' : 'w-64'
 	}`}
@@ -42,20 +43,17 @@
 	<div>
 		<div class="h-16 px-4 flex items-center justify-between border-b border-sky-100/80 dark:border-slate-800">
 			{#if !appState.isSidebarCollapsed}
-				<a href="/gallery" class="flex items-center gap-2.5 group">
-					<div class="w-9 h-9 rounded-xl bg-sky-400 text-white flex items-center justify-center shadow-md shadow-sky-300/40 group-hover:scale-105 transition-transform">
-						<Camera class="w-5 h-5 text-white" />
-					</div>
+				<a href="/gallery" class="flex items-center gap-1.5 group">
+					<Cloud class="w-7 h-7 text-sky-500 float-animation drop-shadow-sm group-hover:scale-110 transition-transform" fill="currentColor" />
 					<div>
-						<h1 class="text-base font-bold text-slate-900 dark:text-white leading-tight">DeepPhotos</h1>
-						<p class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Vault Node</p>
+						<h1 class="text-[17px] font-extrabold tracking-tight text-slate-900 dark:text-white flex items-baseline">
+							Dee<span class="text-2xl bg-clip-text text-transparent bg-gradient-to-r from-sky-500 to-cyan-300 dark:from-sky-300 dark:to-white -mx-[1px]">P</span><span class="bg-clip-text text-transparent bg-gradient-to-r from-sky-500 via-blue-400 to-cyan-300 dark:from-sky-300 dark:via-blue-200 dark:to-white">hotos</span>
+						</h1>
 					</div>
 				</a>
 			{:else}
-				<a href="/gallery" class="mx-auto">
-					<div class="w-9 h-9 rounded-xl bg-sky-400 text-white flex items-center justify-center shadow-md shadow-sky-300/40">
-						<Camera class="w-5 h-5 text-white" />
-					</div>
+				<a href="/gallery" class="mx-auto group">
+					<Cloud class="w-7 h-7 text-sky-500 float-animation drop-shadow-sm group-hover:scale-110 transition-transform" fill="currentColor" />
 				</a>
 			{/if}
 
@@ -69,9 +67,9 @@
 				}`}
 			>
 				{#if appState.isSidebarCollapsed}
-					<ChevronRight class="w-5 h-5 text-sky-500" />
+					<ChevronRight class="w-4 h-4 text-sky-500" />
 				{:else}
-					<ChevronLeft class="w-5 h-5" />
+					<ChevronLeft class="w-4 h-4" />
 				{/if}
 			</button>
 		</div>
@@ -90,7 +88,7 @@
 					} ${appState.isSidebarCollapsed ? 'justify-center px-0' : ''}`}
 				>
 					<item.icon class={`w-4 h-4 shrink-0 ${isActive ? 'text-white' : 'text-slate-400 dark:text-slate-500 group-hover:text-sky-500'}`} />
-					
+
 					{#if !appState.isSidebarCollapsed}
 						<span>{item.name}</span>
 					{/if}
@@ -131,3 +129,13 @@
 		</button>
 	</div>
 </aside>
+
+<style>
+	.float-animation {
+		animation: float-drift 6s ease-in-out infinite;
+	}
+	@keyframes float-drift {
+		0%, 100% { transform: translateY(0px) scale(1); }
+		50% { transform: translateY(-3px) scale(1.02); }
+	}
+</style>

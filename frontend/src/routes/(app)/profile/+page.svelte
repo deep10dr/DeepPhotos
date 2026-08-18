@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { appState, type RegisteredUser, type LoginLog } from '$lib/state.svelte';
+	import { apiFetch } from '$lib/api';
 	import {
 		User,
 		ShieldCheck,
@@ -46,7 +47,7 @@
 
 	async function fetchUsers() {
 		try {
-			const res = await fetch(`${appState.apiBaseUrl}/api/users`);
+			const res = await apiFetch('/api/users');
 			if (res.ok) {
 				usersList = await res.json();
 			}
@@ -57,7 +58,7 @@
 
 	async function fetchAuditLogs() {
 		try {
-			const res = await fetch(`${appState.apiBaseUrl}/api/audit-logs`);
+			const res = await apiFetch('/api/audit-logs');
 			if (res.ok) {
 				loginHistory = await res.json();
 			}
@@ -67,8 +68,10 @@
 	}
 
 	$effect(() => {
-		fetchUsers();
-		fetchAuditLogs();
+		if (appState.user.role === 'Administrator') {
+			fetchUsers();
+			fetchAuditLogs();
+		}
 	});
 
 	function saveProfile(e: Event) {
@@ -102,7 +105,7 @@
 		if (!selectedUserForPass || !newPasswordInput) return;
 
 		try {
-			const res = await fetch(`${appState.apiBaseUrl}/api/users/${selectedUserForPass.id}/password`, {
+			const res = await apiFetch(`/api/users/${selectedUserForPass.id}/password`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ new_password: newPasswordInput })
@@ -121,7 +124,7 @@
 	async function handleRoleChange(user: RegisteredUser, newRole: string) {
 		user.role = newRole as any;
 		try {
-			await fetch(`${appState.apiBaseUrl}/api/users/${user.id}/role`, {
+			await apiFetch(`/api/users/${user.id}/role`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ role: newRole })
@@ -139,10 +142,10 @@
 	}
 </script>
 
-<div class="space-y-6 max-w-5xl animate-fade-in">
+<div class="h-full flex flex-col gap-6 max-w-5xl animate-fade-in">
 	
 	<!-- Header Banner with User Summary -->
-	<div class="p-6 md:p-8 rounded-3xl bg-gradient-to-r from-sky-400 via-sky-500 to-blue-600 text-white shadow-lg shadow-sky-300/30 dark:shadow-sky-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+	<div class="shrink-0 p-6 md:p-8 rounded-3xl bg-gradient-to-r from-sky-400 via-sky-500 to-blue-600 text-white shadow-lg shadow-sky-300/30 dark:shadow-sky-900/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
 		<div class="flex items-center gap-4">
 			<img
 				src={appState.user.avatar}
@@ -171,8 +174,9 @@
 		</div>
 	</div>
 
-	<!-- Section Tabs -->
-	<div class="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+	<div class="flex-1 overflow-y-auto min-h-0">
+		<!-- Section Tabs -->
+		<div class="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
 		<button
 			type="button"
 			onclick={() => activeSection = 'profile'}
@@ -186,31 +190,33 @@
 			User Details
 		</button>
 
-		<button
-			type="button"
-			onclick={() => activeSection = 'users'}
-			class={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-				activeSection === 'users'
-					? 'bg-sky-400 text-white shadow-sm shadow-sky-300/50'
-					: 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-			}`}
-		>
-			<UserPlus class="w-4 h-4 inline mr-1.5" />
-			User Management ({usersList.length})
-		</button>
+		{#if appState.user.role === 'Administrator'}
+			<button
+				type="button"
+				onclick={() => activeSection = 'users'}
+				class={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+					activeSection === 'users'
+						? 'bg-sky-400 text-white shadow-sm shadow-sky-300/50'
+						: 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+				}`}
+			>
+				<UserPlus class="w-4 h-4 inline mr-1.5" />
+				User Management ({usersList.length})
+			</button>
 
-		<button
-			type="button"
-			onclick={() => activeSection = 'history'}
-			class={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-				activeSection === 'history'
-					? 'bg-sky-400 text-white shadow-sm shadow-sky-300/50'
-					: 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
-			}`}
-		>
-			<Clock class="w-4 h-4 inline mr-1.5" />
-			Login History ({loginHistory.length})
-		</button>
+			<button
+				type="button"
+				onclick={() => activeSection = 'history'}
+				class={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+					activeSection === 'history'
+						? 'bg-sky-400 text-white shadow-sm shadow-sky-300/50'
+						: 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800'
+				}`}
+			>
+				<Clock class="w-4 h-4 inline mr-1.5" />
+				Login History ({loginHistory.length})
+			</button>
+		{/if}
 
 		<button
 			type="button"
@@ -328,7 +334,7 @@
 
 	{:else if activeSection === 'users'}
 		<!-- TAB 2: User Management -->
-		<div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-5">
+		<div class="p-6 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
 			
 			<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
 				<div>
@@ -350,10 +356,10 @@
 			</div>
 
 			<!-- Users Table -->
-			<div class="overflow-x-auto">
+			<div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
 				<table class="w-full text-left border-collapse">
 					<thead>
-						<tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+						<tr class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
 							<th class="py-3 px-4">User</th>
 							<th class="py-3 px-4">Email</th>
 							<th class="py-3 px-4">Role</th>
@@ -363,12 +369,14 @@
 					</thead>
 					<tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
 						{#each usersList as user}
-							<tr class="hover:bg-sky-50/50 dark:hover:bg-slate-800/50 transition-colors">
-								<td class="py-3.5 px-4 font-bold text-slate-900 dark:text-white flex items-center gap-3">
-									<img src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} alt={user.name} class="w-8 h-8 rounded-full object-cover ring-2 ring-sky-200 dark:ring-sky-900" />
-									<span>{user.name}</span>
+							<tr class="hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-colors">
+								<td class="py-3.5 px-4 font-semibold text-slate-900 dark:text-slate-100">
+									<div class="flex items-center gap-3">
+										<img src={user.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&auto=format&fit=crop&q=80'} alt={user.name} class="w-8 h-8 rounded-full object-cover" />
+										<span>{user.name}</span>
+									</div>
 								</td>
-								<td class="py-3.5 px-4 text-slate-600 dark:text-slate-300 font-mono">{user.email}</td>
+								<td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 font-mono">{user.email}</td>
 								<td class="py-3.5 px-4">
 									<select
 										value={user.role}
@@ -380,14 +388,14 @@
 										<option value="Viewer">Viewer</option>
 									</select>
 								</td>
-								<td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">{user.lastLogin || 'Recently'}</td>
+								<td class="py-3.5 px-4 text-slate-400 dark:text-slate-500">{user.lastLogin || 'Recently'}</td>
 								<td class="py-3.5 px-4 text-right">
 									<div class="flex items-center justify-end gap-1.5">
 										<button
 											type="button"
 											onclick={() => { selectedUserForPass = user; showResetPassModal = true; }}
 											title="Admin Reset Password"
-											class="p-2 rounded-xl text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40 border border-transparent hover:border-amber-200 dark:hover:border-amber-900 transition-all cursor-pointer"
+											class="p-1.5 rounded-lg text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30 transition-all cursor-pointer"
 										>
 											<KeyRound class="w-4 h-4" />
 										</button>
@@ -397,7 +405,7 @@
 												type="button"
 												onclick={() => handleDeleteUser(user.id, user.name)}
 												title="Delete User"
-												class="p-2 rounded-xl text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-transparent hover:border-rose-200 dark:hover:border-rose-900 transition-all cursor-pointer"
+												class="p-1.5 rounded-lg text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-all cursor-pointer"
 											>
 												<Trash2 class="w-4 h-4" />
 											</button>
@@ -541,7 +549,7 @@
 
 	{:else if activeSection === 'history'}
 		<!-- TAB 3: User Login History Audit Trail -->
-		<div class="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-4">
+		<div class="p-6 rounded-2xl bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
 			<div>
 				<h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
 					<Clock class="w-5 h-5 text-sky-500" />
@@ -550,10 +558,10 @@
 				<p class="text-xs text-slate-500 dark:text-slate-400">Security audit log of recent authentication attempts</p>
 			</div>
 
-			<div class="overflow-x-auto">
+			<div class="overflow-x-auto rounded-xl border border-slate-100 dark:border-slate-800">
 				<table class="w-full text-left border-collapse">
 					<thead>
-						<tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+						<tr class="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
 							<th class="py-3 px-4">User</th>
 							<th class="py-3 px-4">Timestamp</th>
 							<th class="py-3 px-4">IP Address</th>
@@ -562,31 +570,42 @@
 						</tr>
 					</thead>
 					<tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-						{#each loginHistory as log}
-							<tr class="hover:bg-sky-50/50 dark:hover:bg-slate-800/50 transition-colors">
-								<td class="py-3.5 px-4 font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
-									<User class="w-4 h-4 text-sky-500" />
-									<span>{log.user}</span>
-								</td>
-								<td class="py-3.5 px-4 text-slate-600 dark:text-slate-300">{log.timestamp}</td>
-								<td class="py-3.5 px-4 font-mono text-slate-500 dark:text-slate-400">{log.ip}</td>
-								<td class="py-3.5 px-4 text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-									<Laptop class="w-3.5 h-3.5 text-slate-400" />
-									<span>{log.device}</span>
-								</td>
-								<td class="py-3.5 px-4 text-right">
-									{#if log.status === 'Success'}
-										<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 dark:bg-emerald-950/80 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-											Success
-										</span>
-									{:else}
-										<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 dark:bg-rose-950/80 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
-											Failed Attempt
-										</span>
-									{/if}
+						{#if loginHistory.length === 0}
+							<tr>
+								<td colspan="5" class="py-10 text-center text-xs text-slate-400 dark:text-slate-500">
+									<Clock class="w-8 h-8 mx-auto mb-2 opacity-30" />
+									No login records found
 								</td>
 							</tr>
-						{/each}
+						{:else}
+							{#each loginHistory as log}
+								<tr class="hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-colors">
+									<td class="py-3.5 px-4 font-semibold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+										<User class="w-4 h-4 text-sky-500 shrink-0" />
+										<span>{log.user}</span>
+									</td>
+									<td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">{log.timestamp}</td>
+									<td class="py-3.5 px-4 font-mono text-slate-500 dark:text-slate-400">{log.ip}</td>
+									<td class="py-3.5 px-4 text-slate-500 dark:text-slate-400">
+										<span class="flex items-center gap-1.5">
+											<Laptop class="w-3.5 h-3.5 shrink-0" />
+											{log.device}
+										</span>
+									</td>
+									<td class="py-3.5 px-4 text-right">
+										{#if log.status === 'Success'}
+											<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900">
+												Success
+											</span>
+										{:else}
+											<span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900">
+												Failed
+											</span>
+										{/if}
+									</td>
+								</tr>
+							{/each}
+						{/if}
 					</tbody>
 				</table>
 			</div>
@@ -670,5 +689,5 @@
 			</div>
 		</div>
 	{/if}
-
+	</div>
 </div>
