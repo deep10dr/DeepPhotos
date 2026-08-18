@@ -1,42 +1,32 @@
-# sv
+# ⚡ DeepPhotos Frontend Web Application
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+The frontend web application for **DeepPhotos**, built on **SvelteKit** (Svelte 5 Runes + Vite + Tailwind CSS).
 
-## Creating a project
+---
 
-If you're seeing this, you've probably already done this step. Congrats!
+## 🌟 Key Application Features
 
-```sh
-# create a new project
-npx sv create my-app
-```
+* **Svelte 5 Runes State Architecture**: Managed via `$state()`, `$derived()`, and global store `src/lib/state.svelte.ts`.
+* **Collapsible Sidebar**: Left navigation panel with Minimize / Maximize toggle (`Gallery`, `Memories`, `Albums`, `Locked Vault`, `Documents`, `Bin`, `Settings`).
+* **Top Header & Sun/Moon Theme Switcher**: Minimal header with quick User Profile avatar button and Light/Dark mode switcher.
+* **Timeline Photo Grid & Next/Prev Lightbox**: Photo gallery featuring full-screen viewer with Next (`ChevronRight`) / Prev (`ChevronLeft`) controls and keyboard shortcuts (`←`, `→`, `Esc`).
+* **Admin User Management**: Admin panel to add and delete user accounts.
+* **Security Audit Trail**: Timestamped login logs tracking IP addresses and client devices.
 
-To recreate this project with the same configuration:
+---
 
-```sh
-# recreate this project
-npx sv@0.17.0 create --template minimal --types ts --install npm .
-```
+## 🛠️ Development & Build
 
-## Developing
+```bash
+# Install dependencies
+npm install
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```sh
+# Start Vite dev server
 npm run dev
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+# Run Svelte diagnostics check
+npm run check
 
-## Building
-
-To create a production version of your app:
-
-```sh
+# Build production bundle
 npm run build
 ```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
