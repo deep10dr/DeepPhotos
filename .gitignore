@@ -1,0 +1,37 @@
+# Environment variables
+.env
+.env.*
+!.env.template
+!.env.example
+
+# Log files
+*.log
+docker_build.log
+build.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node / Frontend build artifacts
+node_modules/
+.svelte-kit/
+build/
+dist/
+.env.local
+.env.*.local
+
+# Go / Backend binaries & databases
+backend/server
+server
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+backend/data/*.db
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

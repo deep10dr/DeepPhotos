@@ -6,75 +6,84 @@ DeepPhotos is designed to provide a fast and simple way to upload, organize, bro
 
 ---
 
-## 🚧 Project Status
+## 🔒 Private Hierarchical MinIO Object Key Layout
 
-> **Current Phase: 🏗️ Foundation & Setup**
->
-> DeepPhotos is actively under development. The frontend is built on **SvelteKit** (Svelte 5 + Vite), and the backend is being architected with **Go**, **SQLite**, and **MinIO**.
+Internal objects are securely stored in MinIO using a 3-level **UUIDv4** folder hierarchy:
+
+```text
+deepphotos/
+├── image/
+│   └── {uuid4_1}/
+│       └── {uuid4_2}/
+│           └── {uuid4_3}/
+│               └── photo.jpg
+│
+├── video/
+│   └── {uuid4_1}/
+│       └── {uuid4_2}/
+│           └── {uuid4_3}/
+│               └── video.mp4
+│
+├── document/
+│   └── {uuid4_1}/
+│       └── {uuid4_2}/
+│           └── {uuid4_3}/
+│               └── document.pdf
+│
+└── lockedfolder/
+    └── {uuid4_1}/
+        └── {uuid4_2}/
+            └── {uuid4_3}/
+                └── secret.png
+```
 
 ---
 
 ## ✨ Features & Capabilities
 
-### 📸 Photo Management
-* **Timeline Browsing**: View photos chronologically in an interactive grid.
-* **Full-Screen Viewer**: High-resolution viewer with metadata overlay.
-* **Upload & Download**: Fast photo ingestion and original photo retrieval.
-* **Photo Organization**: Mark favorites, delete to trash, and restore photos.
+### 📸 Photo Management & Viewer
+* **Timeline Grid**: View photos chronologically in a responsive, clean grid layout with expressive emoji empty states (🖼️✨, 📄✨, 🔒✨).
+* **Premium Theater Mode Lightbox**: High-resolution, edge-to-edge viewer with backdrop blur inspired by native apps (Google/Apple Photos). Includes floating controls and keyboard shortcuts (`←`, `→`, `Esc`).
+* **Universal & External Drag & Drop**: Drag and drop local files, or drag images directly from external websites into the gallery to instantly upload them to MinIO!
+* **Favorites & Filtering**: Quickly filter media by favorites, videos, or all media.
 
-### 📁 Albums & Collections
-* Create and manage custom photo albums.
-* Organize photos into multiple collections.
+### 📁 Albums, Vault & Organization
+* **Albums**: Create and manage custom photo collections with real-time SQLite persistence. Images inside albums open in the full-screen Lightbox viewer!
+* **Locked Vault & Passcode Folders**: 2-Step passcode creation workflow to generate secure locked folders.
+* **Move to Vault**: Seamlessly move any photo directly into a locked folder from the Lightbox viewer by providing the target folder's passcode.
+* **Admin Oversight for Locked Folders**: Administrators can view locked folder metadata (creator, timestamp, count) and manage them.
+* **Documents & Scans**: Dedicated document storage for scans and PDFs.
+* **Bin / Trash**: Deleted media recovery and storage purging.
 
-### 🖼️ Optimized Media Pipeline
-* **Asynchronous Thumbnails**: Background worker generates WebP thumbnails to keep UI fast.
-* **Original Storage**: High-res originals stored safely in MinIO object storage.
-* **Metadata Extraction**: EXIF data parsing (dimensions, timestamps, camera metadata, GPS).
-
-### 🔍 Search & Filtering
-* Instant search by filename, date, and EXIF tags.
-* *Planned*: AI-powered semantic search and tag indexing.
-
-### ⚡ Performance & Self-Hosting
-* **Lightweight Frontend**: Fluid Svelte 5 single-page application experience.
-* **Low Footprint Backend**: High-performance Go microservice with low memory usage.
-* **Smart Storage**: SQLite for metadata & MinIO for media objects.
+### 👤 User Management & Security Audit
+* **Admin User Control**: Add new user accounts, update user roles (*Administrator*, *Editor*, *Viewer*), or remove accounts.
+* **Admin Password Reset**: Reset any user's password directly from the User Management panel.
+* **Login History Audit Logs**: Detailed audit log tracking authentication attempts, IP addresses, client devices, and timestamps.
+* **Light & Dark Theme Switcher**: Toggle seamlessly between Light Sky/Cloud mode and Minimal Charcoal Dark mode.
 
 ---
 
-## 🏗️ Architecture
+## 🚀 Quick Start & How to Run
 
-```text
-                    ┌──────────────────────┐
-                    │  SvelteKit Frontend  │
-                    │      (Svelte 5)      │
-                    │                      │
-                    │  Photos  │  Albums   │
-                    │  Search  │  Viewer   │
-                    └──────────┬───────────┘
-                               │
-                               │ REST API
-                               ▼
-                    ┌──────────────────────┐
-                    │       Go Backend     │
-                    │                      │
-                    │ Authentication       │
-                    │ Photo Management     │
-                    │ Album Management     │
-                    │ Search & Metadata    │
-                    │ Thumbnail Processing │
-                    └───────┬───────┬──────┘
-                            │       │
-                  Metadata  │       │ Files
-                            ▼       ▼
-                     ┌──────────┐ ┌──────────┐
-                     │  SQLite  │ │  MinIO   │
-                     │          │ │  Object  │
-                     │ Metadata │ │ Storage  │
-                     │  Albums  │ │Originals │
-                     │  Users   │ │Thumbnails│
-                     └──────────┘ └──────────┘
-```
+DeepPhotos provides automated scripts for both Mac/Linux and Windows to easily build and run the application.
+
+### Mac & Linux
+All Mac and Linux shell scripts are located in the `scripts/mac-linux/` folder.
+
+- **Start Development Server**: `./scripts/mac-linux/dev.sh`
+- **Build Local Application**: `./scripts/mac-linux/build.sh`
+- **Build Docker Containers**: `./scripts/mac-linux/docker_build.sh`
+- **Run the Application**: `./scripts/mac-linux/run.sh` (Starts Docker if available, otherwise runs standalone)
+- **Build Local and Run**: `./scripts/mac-linux/build_and_run.sh`
+
+### Windows
+All Windows batch scripts are located in the `scripts/windows/` folder. You can double-click them in File Explorer or run them from the command prompt.
+
+- **Start Development Server**: `scripts\windows\dev.bat`
+- **Build Local Application**: `scripts\windows\build.bat`
+- **Build Docker Containers**: `scripts\windows\docker_build.bat`
+- **Run the Application**: `scripts\windows\run.bat`
+- **Build Local and Run**: `scripts\windows\build_and_run.bat`
 
 ---
 
@@ -82,8 +91,8 @@ DeepPhotos is designed to provide a fast and simple way to upload, organize, bro
 
 | Layer | Technology | Description |
 |---|---|---|
-| **Frontend** | [Svelte 5](https://svelte.dev/) / [SvelteKit](https://svelte.dev/docs/kit) | Modern, fast reactive UI framework |
-| **Styling & Tooling** | TypeScript, Vite, Tailwind CSS | Type-safe front-end tooling |
+| **Frontend** | [Svelte 5](https://svelte.dev/) / [SvelteKit](https://svelte.dev/docs/kit) | Modern, fast reactive UI framework using Svelte Runes |
+| **Styling & Tooling** | TypeScript, Vite, Tailwind CSS | Type-safe front-end tooling with Light & Dark mode support |
 | **Backend** | [Go (Golang)](https://golang.org/) | High-concurrency, low-footprint REST API |
 | **Database** | [SQLite](https://www.sqlite.org/) | Embedded zero-config metadata store |
 | **Object Storage** | [MinIO](https://min.io/) | S3-compatible self-hosted object storage |
@@ -91,228 +100,6 @@ DeepPhotos is designed to provide a fast and simple way to upload, organize, bro
 
 ---
 
-## 📁 Repository Structure
-
-```text
-DeepPhotos/
-├── frontend/                # SvelteKit frontend web application
-│   ├── src/
-│   │   ├── lib/             # Reusable UI components, stores, & API client
-│   │   └── routes/          # SvelteKit pages (Timeline, Albums, Viewer, Search)
-│   ├── static/              # Static public assets
-│   ├── package.json
-│   ├── svelte.config.js
-│   └── vite.config.ts
-│
-├── backend/                 # Go REST API backend (in active development)
-│   ├── cmd/server/          # Application main entry point
-│   ├── internal/            # API handlers, services, database & storage drivers
-│   └── go.mod
-│
-├── docker/                  # Infrastructure & container orchestration
-│   └── docker-compose.yaml  # Service setup for MinIO, Go API, & Frontend
-│
-├── .env.template            # Template for required environment variables
-├── build.sh                 # Build helper script
-├── run.sh                   # Run helper script
-├── dev.sh                   # Development startup script
-└── README.md                # Project documentation
-```
-
----
-
-## 💾 Storage & Media Design
-
-DeepPhotos cleanly decouples **structured metadata** from **raw media objects**.
-
-### 📊 SQLite Metadata Schema (`photos.db`)
-
-```text
-photos
-├── id (UUID / PRIMARY KEY)
-├── filename
-├── object_key        --> (MinIO reference for original file)
-├── thumbnail_key     --> (MinIO reference for WebP thumbnail)
-├── mime_type
-├── size
-├── width, height
-├── taken_at, uploaded_at
-├── latitude, longitude
-├── hash              --> (SHA-256 for duplicate detection)
-├── is_favorite
-└── is_deleted
-```
-
-### 📦 MinIO Bucket Structure
-
-```text
-photos/
-├── originals/
-│   └── YYYY/MM/
-│       ├── a8f92.jpg
-│       └── b72ac.png
-├── thumbnails/
-│   └── YYYY/MM/
-│       ├── a8f92.webp
-│       └── b72ac.webp
-└── videos/
-    └── YYYY/MM/
-```
-
----
-
-## ⚡ Thumbnail Strategy & Media Pipeline
-
-To keep the UI responsive on low-power servers and mobile browsers, the gallery renders lightweight WebP thumbnails rather than fetching multi-megabyte original files:
-
-```text
-                User opens gallery
-                       │
-                       ▼
-                 Thumbnail image (.webp)
-                       │
-                       │ Click photo
-                       ▼
-                 Full-size viewer
-                       │
-                       ▼
-                 Original image
-```
-
-### 🔄 Asynchronous Upload Architecture
-
-```text
-User  ──(Upload Photo)──>  SvelteKit UI  ──(POST /api/photos)──>  Go API Service
-                                                                     │
-                                                 ┌───────────────────┴───────────────────┐
-                                                 ▼                                       ▼
-                                           MinIO Storage                           SQLite Database
-                                        (Save Original File)                     (Write Photo Record)
-                                                 │
-                                                 ▼
-                                        Background Worker
-                                   (Generate WebP Thumbnail)
-                                                 │
-                                                 ▼
-                                           MinIO Storage
-                                        (Save Thumbnail File)
-```
-
----
-
-## 🔐 Security & Access Control
-
-* **Decoupled Credentials**: SvelteKit never handles MinIO credentials; media is securely proxied or served via presigned URLs generated by the Go backend.
-* **Controlled Access**: Go API validates session tokens and user authorization before serving media or metadata.
-* **Planned Features**: Multi-user authentication, private albums, link sharing with expiration dates, and rate limiting.
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-
-Ensure you have the following installed on your machine:
-
-* **Node.js**: v18+ and `npm`
-* **Go**: v1.21+ (for backend development)
-* **Docker & Docker Compose**: for MinIO and container deployment
-
-Verify your setup:
-
-```bash
-node --version
-npm --version
-go version
-docker --version
-docker compose version
-```
-
-### 1. Environment Setup
-
-Copy `.env.template` to create your local `.env` file:
-
-```bash
-cp .env.template .env
-```
-
-### 2. Frontend Development
-
-Navigate to the frontend directory, install dependencies, and start the Vite dev server:
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-The frontend client will be available at [http://localhost:5173](http://localhost:5173).
-
-### 3. Backend Development
-
-Navigate to the backend directory:
-
-```bash
-cd backend
-go mod download
-go run ./cmd/server
-```
-
-The REST API will run at [http://localhost:8080](http://localhost:8080).
-
-### 4. MinIO Object Storage Setup
-
-Start local storage services via Docker Compose:
-
-```bash
-docker compose -f docker/docker-compose.yaml up -d
-```
-
-Access points:
-* **MinIO API**: `http://localhost:9000`
-* **MinIO Web Console**: `http://localhost:9001`
-
----
-
-## 🧭 Development Roadmap
-
-### Phase 1 — Foundation (Current)
-* [x] SvelteKit 5 project setup & layout
-* [x] Infrastructure & Docker architecture definition
-* [ ] Go REST API foundation
-* [ ] SQLite schema & migration runner
-* [ ] MinIO client integration
-
-### Phase 2 — Core Photo Management
-* [ ] Multi-file photo uploader with progress tracking
-* [ ] Background worker for thumbnail generation (WebP)
-* [ ] High-performance photo grid with lazy loading & virtual scroll
-* [ ] Lightbox viewer with full EXIF metadata display
-* [ ] Photo deletion (Trash) and restoration
-
-### Phase 3 — Organization & Search
-* [ ] Custom photo albums & tagging
-* [ ] Favorites collection
-* [ ] Timeline grouping by date/year
-* [ ] Metadata and filename search
-
-### Phase 4 — Optimization & Advanced Features
-* [ ] SHA-256 duplicate image detection
-* [ ] Video upload & streaming playback
-* [ ] EXIF map visualization (GPS coordinates)
-* [ ] Shared albums & temporary access links
-
----
-
-## 🎯 Design Principles
-
-* **Lightweight**: Minimal dependencies, low memory consumption. Ideal for Raspberry Pi or home NAS setup.
-* **Fast & Responsive**: Thumbnail-first rendering, asynchronous background processing, and quick navigation.
-* **Self-Hosted Privacy**: Full ownership of your data without reliance on cloud providers.
-* **Simple Infrastructure**: Single Go binary, embedded SQLite metadata database, and MinIO object storage.
-
----
-
 ## 📜 License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is licensed under the [Apache License 2.0](LICENSE).
