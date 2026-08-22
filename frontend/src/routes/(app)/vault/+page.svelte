@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
 	import { apiFetch, getMediaUrl } from '$lib/api';
+	import { notify, confirmDialog } from '$lib/notify.svelte';
 	import { Lock, Unlock, Key, ShieldCheck, FolderClosed, Plus, X, Trash2, User, Clock, AlertCircle, FileText, Image as ImageIcon, Video, Play, Download } from 'lucide-svelte';
 
 	interface LockedFolder {
@@ -163,15 +164,26 @@
 
 	async function handleDeleteFolder(id: string, name: string, e: Event) {
 		e.stopPropagation();
-		if (!confirm(`Delete locked folder "${name}"?`)) return;
+		const confirmed = await confirmDialog.ask({
+			title: 'Delete Locked Vault Folder',
+			message: `Delete locked folder "${name}"?`,
+			confirmText: 'Yes, Delete Folder',
+			cancelText: 'Cancel',
+			type: 'danger'
+		});
+		if (!confirmed) return;
 
 		try {
 			const res = await apiFetch(`/api/locked-folders/${id}`, { method: 'DELETE' });
 			if (res.ok) {
+				notify.success(`Locked folder "${name}" deleted.`);
 				await fetchLockedFolders();
+			} else {
+				notify.error('Failed to delete locked folder.');
 			}
 		} catch (err) {
 			console.error('Error deleting locked folder:', err);
+			notify.error('Network error deleting locked folder.');
 		}
 	}
 

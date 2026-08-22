@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
 	import { apiFetch, getMediaUrl } from '$lib/api';
+	import { notify, confirmDialog } from '$lib/notify.svelte';
 	import { FolderClosed, Plus, Image as ImageIcon, X, Trash2, ArrowLeft, CheckCircle2, Check, PlusCircle, Lock, ChevronLeft, ChevronRight, ShieldCheck, AlertCircle } from 'lucide-svelte';
 
 	interface Album {
@@ -209,16 +210,27 @@
 
 	async function handleDeleteAlbum(id: string, name: string, e: Event) {
 		e.stopPropagation();
-		if (!confirm(`Delete album "${name}"?`)) return;
+		const confirmed = await confirmDialog.ask({
+			title: 'Delete Album',
+			message: `Delete album "${name}"? Photos inside will remain in your gallery.`,
+			confirmText: 'Yes, Delete Album',
+			cancelText: 'Cancel',
+			type: 'danger'
+		});
+		if (!confirmed) return;
 
 		try {
 			const res = await apiFetch(`/api/albums/${id}`, { method: 'DELETE' });
 			if (res.ok) {
+				notify.success(`Album "${name}" deleted.`);
 				if (selectedAlbum?.id === id) closeAlbum();
 				await fetchAlbums();
+			} else {
+				notify.error('Failed to delete album.');
 			}
 		} catch (err) {
 			console.error('Error deleting album:', err);
+			notify.error('Network error deleting album.');
 		}
 	}
 

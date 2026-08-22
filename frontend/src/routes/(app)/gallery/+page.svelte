@@ -2,6 +2,9 @@
 	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
 	import { apiFetch, getMediaUrl } from '$lib/api';
+	import { notify, confirmDialog } from '$lib/notify.svelte';
+	import DropZone from '$lib/components/DropZone.svelte';
+	import UploadButton from '$lib/components/UploadButton.svelte';
 	import {
 		Image as ImageIcon,
 		Heart,
@@ -22,7 +25,8 @@
 		ShieldCheck,
 		AlertCircle,
 		ArrowLeft,
-		Sliders
+		Sliders,
+		Maximize2
 	} from 'lucide-svelte';
 
 	interface PhotoItem {
@@ -179,22 +183,39 @@
 
 	async function deletePhoto(photo: PhotoItem, e?: Event) {
 		if (e) e.stopPropagation();
-		if (!confirm(`Move "${photo.title}" to bin?`)) return;
+		const confirmed = await confirmDialog.ask({
+			title: 'Move Item to Bin',
+			message: `Move "${photo.title}" to bin? You can restore it anytime from the Bin.`,
+			confirmText: 'Yes, Move to Bin',
+			cancelText: 'Cancel',
+			type: 'warning'
+		});
+		if (!confirmed) return;
 
 		try {
-			await apiFetch(`/api/photos/${photo.id}`, {
+			const res = await apiFetch(`/api/photos/${photo.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ is_deleted: true })
 			});
+			if (res.ok) {
+				notify.success(`"${photo.title}" moved to bin.`);
+			}
 			if (selectedIndex !== null) closePhoto();
 			fetchPhotos();
 		} catch (err) {
 			console.error('Error deleting photo:', err);
+			notify.error('Failed to move item to bin.');
 		}
 	}
 
-	function openMoveToVaultDialog() {
+	function openMoveToVaultDialog(photo?: PhotoItem, e?: Event) {
+		if (e) e.stopPropagation();
+		if (photo) {
+			// Find photo index or set selectedPhoto
+			const idx = filteredPhotos.findIndex(p => p.id === photo.id);
+			if (idx !== -1) selectedIndex = idx;
+		}
 		if (lockedFolders.length === 0) {
 			alert('No locked folders available. Please create a locked folder first in Locked Vault!');
 			return;
@@ -256,119 +277,11 @@
 		if (e.key === 'Escape') closePhoto();
 	}
 
-	// Drag & Drop — tracks nested enter/leave to prevent flicker
-	let isDraggingExternal = $state(false);
-	let isUploadingExternal = $state(false);
-	let dragCounter = 0;
-
-	function handleDragEnter(e: DragEvent) {
-		e.preventDefault();
-		dragCounter++;
-		if (dragCounter === 1) {
-			isDraggingExternal = true;
-		}
-	}
-
-	function handleDragOver(e: DragEvent) {
-		e.preventDefault();
-		if (e.dataTransfer) {
-			e.dataTransfer.dropEffect = 'copy';
-		}
-	}
-
-	function handleDragLeave(e: DragEvent) {
-		e.preventDefault();
-		dragCounter--;
-		if (dragCounter <= 0) {
-			dragCounter = 0;
-			isDraggingExternal = false;
-		}
-	}
-
-	async function handleDrop(e: DragEvent) {
-		e.preventDefault();
-		dragCounter = 0;
-		isDraggingExternal = false;
-
-		const dt = e.dataTransfer;
-		if (!dt) return;
-
-		// 1. LOCAL FILES — user dragged files from their file system
-		if (dt.files && dt.files.length > 0) {
-			isUploadingExternal = true;
-			try {
-				const formData = new FormData();
-				for (const file of Array.from(dt.files)) {
-					formData.append('files', file);
-				}
-				const res = await apiFetch('/api/photos/upload', {
-					method: 'POST',
-					body: formData
-				});
-				if (res.ok) {
-					await fetchPhotos();
-				} else {
-					console.error('Upload failed:', await res.text());
-				}
-			} catch (err) {
-				console.error('Drop upload error:', err);
-			} finally {
-				isUploadingExternal = false;
-			}
-			return;
-		}
-
-		// 2. EXTERNAL URL — user dragged an image from another browser tab
-		let urlToUpload = '';
-
-		const html = dt.getData('text/html');
-		if (html) {
-			const match = html.match(/src="([^"]+)"/);
-			if (match && match[1] && match[1].startsWith('http')) {
-				urlToUpload = match[1];
-			}
-		}
-
-		if (!urlToUpload) {
-			const uriList = dt.getData('text/uri-list');
-			if (uriList && uriList.startsWith('http')) {
-				urlToUpload = uriList.split('\n')[0].trim();
-			}
-		}
-
-		if (!urlToUpload) {
-			const plain = dt.getData('text/plain');
-			if (plain && plain.startsWith('http')) {
-				urlToUpload = plain.trim();
-			}
-		}
-
-		if (urlToUpload) {
-			isUploadingExternal = true;
-			try {
-				const res = await apiFetch('/api/photos/upload-url', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ url: urlToUpload })
-				});
-				if (res.ok) {
-					await fetchPhotos();
-				} else {
-					alert('Failed to import image from URL.');
-				}
-			} catch (err) {
-				console.error(err);
-				alert('Network error during import.');
-			} finally {
-				isUploadingExternal = false;
-			}
-		}
-	}
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div role="region" aria-label="Gallery Dropzone" class="h-full flex flex-col gap-6 animate-fade-in" ondragenter={handleDragEnter} ondragover={handleDragOver} ondragleave={handleDragLeave} ondrop={handleDrop}>
+<DropZone class="h-full flex flex-col gap-6 animate-fade-in" onUploadComplete={fetchPhotos}>
 
 	<!-- Header Bar -->
 	<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 shrink-0">
@@ -417,6 +330,9 @@
 				Videos ({photos.filter(p => p.file_type === 'video' || p.mime_type.startsWith('video/')).length})
 			</button>
 		</div>
+
+		<!-- Reusable Upload Button -->
+		<UploadButton label="Upload" variant="primary" />
 	</div>
 
 	<div class="flex-1 overflow-y-auto min-h-0">
@@ -474,13 +390,23 @@
 										type="button"
 										onclick={(e) => toggleFavorite(photo, e)}
 										class="p-1.5 rounded-full bg-white/20 hover:bg-white/40 text-white backdrop-blur-md transition-colors"
+										title="Favorite"
 									>
 										<Heart class={`w-4 h-4 ${photo.is_favorite ? 'fill-rose-500 text-rose-500' : 'text-white'}`} />
 									</button>
 									<button
 										type="button"
+										onclick={(e) => openMoveToVaultDialog(photo, e)}
+										class="p-1.5 rounded-full bg-white/20 hover:bg-sky-500/80 text-white backdrop-blur-md transition-colors"
+										title="Move to Locked Vault"
+									>
+										<Lock class="w-4 h-4" />
+									</button>
+									<button
+										type="button"
 										onclick={(e) => deletePhoto(photo, e)}
 										class="p-1.5 rounded-full bg-white/20 hover:bg-rose-500/80 text-white backdrop-blur-md transition-colors"
+										title="Move to Bin"
 									>
 										<Trash2 class="w-4 h-4" />
 									</button>
@@ -500,14 +426,14 @@
 	</div>
 
 	{#if selectedPhoto && selectedIndex !== null}
-		<!-- GOOGLE PHOTOS FULL-SCREEN THEATER MODE (Z-INDEX 100 PREVENTS ANY OVERFLOW OR CLASHING) -->
-		<div class="fixed inset-0 z-[100] w-screen h-screen bg-black/95 backdrop-blur-xl flex flex-col select-none overflow-hidden animate-fade-in">
+		<!-- GOOGLE PHOTOS FULL-SCREEN THEATER MODE (Z-INDEX 9999 PREVENTS ANY OVERFLOW OR CLASHING) -->
+		<div class="fixed inset-0 z-[9999] w-screen h-screen bg-black/95 backdrop-blur-xl flex flex-col select-none overflow-hidden animate-fade-in">
 
-			<!-- TOP GOOGLE PHOTOS NAVIGATION OVERLAY TOOLBAR (Z-INDEX 110) -->
-			<div class="absolute top-0 left-0 right-0 z-[110] p-4 flex items-center justify-between pointer-events-none">
+			<!-- TOP GOOGLE PHOTOS NAVIGATION OVERLAY TOOLBAR (Z-INDEX 10000) -->
+			<div class="absolute top-0 left-0 right-0 z-[10000] p-4 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
 
 				<!-- Left: Back Arrow, Title & Counter -->
-				<div class="flex items-center gap-3 pointer-events-auto bg-black/40 backdrop-blur-md pl-2 pr-4 py-2 rounded-full border border-white/10">
+				<div class="flex items-center gap-3 pointer-events-auto bg-slate-900/80 backdrop-blur-xl pl-2 pr-4 py-2 rounded-full border border-white/10 shadow-lg">
 					<button
 						type="button"
 						onclick={closePhoto}
@@ -527,128 +453,139 @@
 					</div>
 				</div>
 
-				<!-- Right Action Buttons: Zoom, Favorite, Move to Vault, Details Info, Download, Trash, Close -->
-				<div class="flex items-center gap-1.5 sm:gap-2 pointer-events-auto bg-black/40 backdrop-blur-md px-2 py-1.5 rounded-full border border-white/10">
+				<!-- Right: Resized to Fit Screen Badge & Action Buttons -->
+				<div class="flex items-center gap-2 pointer-events-auto">
 
-					{#if selectedPhoto.file_type !== 'video' && !selectedPhoto.mime_type.startsWith('video/')}
+					<!-- Resized to Fit Screen Top Right Indicator Badge -->
+					<div class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-xl border border-sky-500/30 text-sky-300 text-[11px] font-semibold shadow-lg">
+						<Maximize2 class="w-3.5 h-3.5 text-sky-400" />
+						<span>Resized to Fit Screen</span>
+					</div>
+
+					<!-- Action Buttons Group: Zoom, Favorite, Move to Vault, Details Info, Download, Trash, Close -->
+					<div class="flex items-center gap-1.5 sm:gap-2 bg-slate-900/80 backdrop-blur-xl px-2.5 py-1.5 rounded-full border border-white/10 shadow-lg">
+
+						{#if selectedPhoto.file_type !== 'video' && !selectedPhoto.mime_type.startsWith('video/')}
+							<button
+								type="button"
+								onclick={() => showZoomControls = !showZoomControls}
+								class={`p-2 rounded-full transition-all cursor-pointer ${
+									showZoomControls
+										? 'bg-sky-500 text-white shadow-md'
+										: 'text-slate-200 hover:bg-white/15'
+								}`}
+								title="Zoom Controls"
+							>
+								<Sliders class="w-5 h-5" />
+							</button>
+						{/if}
+
 						<button
 							type="button"
-							onclick={() => showZoomControls = !showZoomControls}
+							onclick={() => toggleFavorite(selectedPhoto)}
 							class={`p-2 rounded-full transition-all cursor-pointer ${
-								showZoomControls
-									? 'bg-sky-400 text-white'
-									: 'text-slate-200 hover:bg-white/10'
+								selectedPhoto.is_favorite
+									? 'text-rose-500 bg-white/15 shadow-md'
+									: 'text-slate-200 hover:bg-white/15'
 							}`}
-							title="Zoom Slider"
+							title={selectedPhoto.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
 						>
-							<Sliders class="w-5 h-5" />
+							<Heart class={`w-5 h-5 ${selectedPhoto.is_favorite ? 'fill-rose-500 text-rose-500' : ''}`} />
 						</button>
-					{/if}
 
-					<button
-						type="button"
-						onclick={() => toggleFavorite(selectedPhoto)}
-						class={`p-2 rounded-full transition-all cursor-pointer ${
-							selectedPhoto.is_favorite
-								? 'text-rose-500 bg-white/15'
-								: 'text-slate-200 hover:bg-white/10'
-						}`}
-						title="Favorite"
-					>
-						<Heart class={`w-5 h-5 ${selectedPhoto.is_favorite ? 'fill-rose-500 text-rose-500' : ''}`} />
-					</button>
+						<button
+							type="button"
+							onclick={(e) => openMoveToVaultDialog(selectedPhoto, e)}
+							class="p-2 rounded-full text-slate-200 hover:text-sky-300 hover:bg-white/15 transition-colors cursor-pointer"
+							title="Move to Locked Vault"
+						>
+							<Lock class="w-5 h-5 text-sky-400" />
+						</button>
 
-					<button
-						type="button"
-						onclick={openMoveToVaultDialog}
-						class="p-2 rounded-full text-slate-200 hover:text-sky-300 hover:bg-white/10 transition-colors cursor-pointer"
-						title="Move to Locked Vault"
-					>
-						<Lock class="w-5 h-5" />
-					</button>
+						<button
+							type="button"
+							onclick={() => showDetailsModal = !showDetailsModal}
+							class={`p-2 rounded-full transition-all cursor-pointer ${
+								showDetailsModal
+									? 'bg-sky-500 text-white shadow-md'
+									: 'text-slate-200 hover:bg-white/15'
+							}`}
+							title="Info & Technical Details"
+						>
+							<Info class="w-5 h-5" />
+						</button>
 
-					<button
-						type="button"
-						onclick={() => showDetailsModal = !showDetailsModal}
-						class={`p-2 rounded-full transition-all cursor-pointer ${
-							showDetailsModal
-								? 'bg-sky-400 text-white'
-								: 'text-slate-200 hover:bg-white/10'
-						}`}
-						title="Info & Technical Details"
-					>
-						<Info class="w-5 h-5" />
-					</button>
+						<a
+							href={selectedPhoto.url}
+							download={selectedPhoto.filename}
+							target="_blank"
+							class="p-2 rounded-full text-slate-200 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
+							title="Download Original"
+						>
+							<Download class="w-5 h-5" />
+						</a>
 
-					<a
-						href={selectedPhoto.url}
-						download={selectedPhoto.filename}
-						target="_blank"
-						class="p-2 rounded-full text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-						title="Download Original"
-					>
-						<Download class="w-5 h-5" />
-					</a>
+						<button
+							type="button"
+							onclick={() => deletePhoto(selectedPhoto)}
+							class="p-2 rounded-full text-slate-200 hover:text-rose-400 hover:bg-white/15 transition-colors cursor-pointer"
+							title="Move to Bin"
+						>
+							<Trash2 class="w-5 h-5" />
+						</button>
 
-					<button
-						type="button"
-						onclick={() => deletePhoto(selectedPhoto)}
-						class="p-2 rounded-full text-slate-200 hover:text-rose-400 hover:bg-white/10 transition-colors cursor-pointer"
-						title="Move to Trash"
-					>
-						<Trash2 class="w-5 h-5" />
-					</button>
+						<button
+							type="button"
+							onclick={closePhoto}
+							title="Close (Esc)"
+							class="p-2 rounded-full text-slate-200 hover:text-white hover:bg-white/15 transition-colors cursor-pointer ml-1"
+						>
+							<X class="w-6 h-6" />
+						</button>
 
-					<button
-						type="button"
-						onclick={closePhoto}
-						title="Close (Esc)"
-						class="p-2 rounded-full text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer ml-1"
-					>
-						<X class="w-6 h-6" />
-					</button>
+					</div>
 
 				</div>
 
 			</div>
 
-			<!-- FLOATING PREVIOUS ARROW (Z-INDEX 110) -->
+			<!-- FLOATING PREVIOUS ARROW (Z-INDEX 10000) -->
 			<button
 				type="button"
 				onclick={prevPhoto}
 				title="Previous (Left Arrow)"
-				class="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-[110] w-12 h-12 rounded-full bg-slate-900/60 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md group"
+				class="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-[10000] w-12 h-12 rounded-full bg-slate-900/70 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md group shadow-xl"
 			>
 				<ChevronLeft class="w-7 h-7 transition-transform group-hover:-translate-x-0.5" />
 			</button>
 
-			<!-- FLOATING NEXT ARROW (Z-INDEX 110) -->
+			<!-- FLOATING NEXT ARROW (Z-INDEX 10000) -->
 			<button
 				type="button"
 				onclick={nextPhoto}
 				title="Next (Right Arrow)"
-				class="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-[110] w-12 h-12 rounded-full bg-slate-900/60 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md group"
+				class="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-[10000] w-12 h-12 rounded-full bg-slate-900/70 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md group shadow-xl"
 			>
 				<ChevronRight class="w-7 h-7 transition-transform group-hover:translate-x-0.5" />
 			</button>
 
-			<!-- GOOGLE PHOTOS CENTER THEATER DISPLAY CANVAS -->
-			<div class="flex-1 w-full h-full relative flex items-center justify-center p-0 overflow-hidden">
+			<!-- GOOGLE PHOTOS CENTER THEATER DISPLAY CANVAS (PREVENTS IMAGE CUT-OFF) -->
+			<div class="flex-1 w-full h-full min-h-0 min-w-0 relative flex items-center justify-center pt-20 pb-20 px-4 md:px-16 overflow-hidden">
 				{#if selectedPhoto.file_type === 'video' || selectedPhoto.mime_type.startsWith('video/')}
-					<video src={selectedPhoto.url} controls autoplay class="w-full h-full object-contain"></video>
+					<video src={selectedPhoto.url} controls autoplay class="max-w-[calc(100vw-64px)] max-h-[calc(100vh-140px)] w-auto h-auto object-contain rounded-xl shadow-2xl"></video>
 				{:else}
 					<img
 						src={selectedPhoto.url}
 						alt={selectedPhoto.title}
 						style={`transform: scale(${zoomScale / 100}); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);`}
-						class="w-full h-full object-contain select-none cursor-grab active:cursor-grabbing"
+						class="max-w-[calc(100vw-64px)] max-h-[calc(100vh-140px)] w-auto h-auto object-contain select-none cursor-grab active:cursor-grabbing rounded-xl shadow-2xl"
 					/>
 				{/if}
 			</div>
 
-			<!-- FLOATING BOTTOM ZOOM BAR (Z-INDEX 110) -->
+			<!-- FLOATING BOTTOM ZOOM BAR (Z-INDEX 10000) -->
 			{#if showZoomControls && selectedPhoto.file_type !== 'video' && !selectedPhoto.mime_type.startsWith('video/')}
-				<div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-[110] p-3 px-6 bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl flex items-center justify-center gap-4 shadow-2xl animate-fade-in">
+				<div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-[10000] p-3 px-6 bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl flex items-center justify-center gap-4 shadow-2xl animate-fade-in">
 					<div class="flex items-center gap-3">
 						<button
 							type="button"
@@ -693,9 +630,9 @@
 				</div>
 			{/if}
 
-			<!-- GOOGLE PHOTOS RIGHT SLIDE-OVER INFO DRAWER (Z-INDEX 120) -->
+			<!-- GOOGLE PHOTOS RIGHT SLIDE-OVER INFO DRAWER (Z-INDEX 10000) -->
 			{#if showDetailsModal}
-				<div class="fixed top-0 right-0 bottom-0 w-80 sm:w-96 bg-slate-900/95 backdrop-blur-2xl z-[120] p-6 border-l border-slate-800 shadow-2xl overflow-y-auto space-y-6 animate-fade-in text-white">
+				<div class="fixed top-0 right-0 bottom-0 w-80 sm:w-96 bg-slate-900/95 backdrop-blur-2xl z-[10000] p-6 border-l border-slate-800 shadow-2xl overflow-y-auto space-y-6 animate-fade-in text-white">
 					<div class="flex items-center justify-between border-b border-slate-800 pb-4">
 						<h4 class="font-bold text-base flex items-center gap-2">
 							<Info class="w-5 h-5 text-sky-400" />
@@ -741,9 +678,9 @@
 		</div>
 	{/if}
 
-	<!-- MOVE TO LOCKED FOLDER DIALOG (Z-INDEX 130) -->
+	<!-- MOVE TO LOCKED FOLDER DIALOG (Z-INDEX 10001) -->
 	{#if showMoveToVaultModal && selectedPhoto}
-		<div class="fixed inset-0 z-[130] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+		<div class="fixed inset-0 z-[10001] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
 			<div class="bg-white dark:bg-slate-900 rounded-3xl p-6 md:p-8 max-w-md w-full border border-slate-200 dark:border-slate-800 shadow-2xl animate-fade-in relative">
 				<button
 					type="button"
@@ -815,30 +752,4 @@
 		</div>
 	{/if}
 
-	<!-- DRAG & DROP EXTERNAL OVERLAYS -->
-	{#if isDraggingExternal}
-		<div class="fixed inset-0 z-[200] bg-sky-500/10 backdrop-blur-sm border-[6px] border-dashed border-sky-400 flex flex-col items-center justify-center animate-fade-in pointer-events-none transition-all">
-			<div class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl flex flex-col items-center justify-center gap-4">
-				<div class="w-20 h-20 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-500 flex items-center justify-center shadow-inner">
-					<Download class="w-10 h-10 animate-bounce" />
-				</div>
-				<div class="text-center">
-					<h2 class="text-xl font-bold text-slate-900 dark:text-white">Drop to import</h2>
-					<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">We'll download this image directly to your vault</p>
-				</div>
-			</div>
-		</div>
-	{/if}
-
-	{#if isUploadingExternal}
-		<div class="fixed inset-0 z-[200] bg-slate-950/80 backdrop-blur-md flex flex-col items-center justify-center animate-fade-in pointer-events-none">
-			<div class="bg-white dark:bg-slate-900 p-8 rounded-3xl shadow-2xl flex flex-col items-center justify-center gap-4 w-64">
-				<div class="w-16 h-16 rounded-full border-4 border-sky-100 border-t-sky-500 animate-spin"></div>
-				<div class="text-center">
-					<h2 class="text-base font-bold text-slate-900 dark:text-white">Importing Media...</h2>
-					<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Downloading file from the web</p>
-				</div>
-			</div>
-		</div>
-	{/if}
-</div>
+</DropZone>

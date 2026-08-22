@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"deepphotos/backend/internal/config"
@@ -14,6 +15,8 @@ import (
 	"deepphotos/backend/internal/repository"
 	"deepphotos/backend/internal/service"
 	"deepphotos/backend/internal/storage"
+	"deepphotos/backend/internal/utils"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
@@ -62,7 +65,7 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"*"},
+		AllowedOrigins:   strings.Split(utils.GetEnv("AllOWED_ORIGIN", "*"), ","),
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
@@ -94,6 +97,7 @@ func main() {
 		r.Route("/api/photos", func(r chi.Router) {
 			r.Get("/", photosHandler.List)
 			r.Post("/", photosHandler.Upload)
+			r.Post("/upload", photosHandler.Upload)
 			r.Post("/upload-url", photosHandler.UploadURL)
 			r.Post("/batch-delete", photosHandler.DeleteBatch)
 			r.Post("/batch-restore", photosHandler.RestoreBatch)
@@ -123,7 +127,7 @@ func main() {
 		r.Route("/api/users", func(r chi.Router) {
 			r.Put("/{id}", usersHandler.Update)
 			r.Put("/{id}/password", usersHandler.ChangePassword)
-			
+
 			r.Group(func(r chi.Router) {
 				r.Use(authMiddleware.RequireAdmin)
 				r.Get("/", usersHandler.List)
