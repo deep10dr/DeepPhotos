@@ -44,6 +44,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db)
 	photoRepo := repository.NewPhotoRepository(db)
 	albumRepo := repository.NewAlbumRepository(db)
+	memoryRepo := repository.NewMemoryRepository(db)
 	auditRepo := repository.NewAuditRepository(db)
 	lockedRepo := repository.NewLockedRepository(db)
 
@@ -56,7 +57,8 @@ func main() {
 	authHandler := handler.NewAuthHandler(authService)
 	photosHandler := handler.NewPhotosHandler(photoRepo, photoService, storageClient)
 	albumsHandler := handler.NewAlbumsHandler(albumRepo)
-	usersHandler := handler.NewUsersHandler(userRepo)
+	memoriesHandler := handler.NewMemoriesHandler(memoryRepo)
+	usersHandler := handler.NewUsersHandler(userRepo, storageClient)
 	auditHandler := handler.NewAuditHandler(auditRepo)
 	lockedHandler := handler.NewLockedHandler(lockedRepo)
 
@@ -93,8 +95,10 @@ func main() {
 	// Protected Routes
 	r.Group(func(r chi.Router) {
 		r.Use(authMiddleware.RequireAuth)
-
-		r.Route("/api/photos", func(r chi.Router) {
+		// Dynamic media routes
+		r.Get("/api/media", photosHandler.List)
+		r.Post("/api/media", photosHandler.Upload)
+		r.Route("/api/media", func(r chi.Router) {
 			r.Get("/", photosHandler.List)
 			r.Post("/", photosHandler.Upload)
 			r.Post("/upload", photosHandler.Upload)
@@ -108,6 +112,14 @@ func main() {
 			r.Get("/{id}/thumbnail", photosHandler.StreamThumbnail)
 		})
 
+		// Route aliases so /api/gallery, /api/documents, and /api/photos never 404
+		r.Get("/api/gallery", photosHandler.ListGallery)
+		r.Get("/api/gallery/", photosHandler.ListGallery)
+		r.Get("/api/documents", photosHandler.ListDocuments)
+		r.Get("/api/documents/", photosHandler.ListDocuments)
+		r.Get("/api/photos", photosHandler.List)
+		r.Get("/api/photos/", photosHandler.List)
+
 		r.Route("/api/albums", func(r chi.Router) {
 			r.Get("/", albumsHandler.List)
 			r.Post("/", albumsHandler.Create)
@@ -115,6 +127,15 @@ func main() {
 			r.Put("/{id}", albumsHandler.Update)
 			r.Delete("/{id}", albumsHandler.Delete)
 			r.Post("/{id}/photos", albumsHandler.AddPhotos)
+		})
+
+		r.Route("/api/memories", func(r chi.Router) {
+			r.Get("/", memoriesHandler.List)
+			r.Post("/", memoriesHandler.Create)
+			r.Get("/{id}", memoriesHandler.GetDetail)
+			r.Delete("/{id}", memoriesHandler.Delete)
+			r.Post("/{id}/photos", memoriesHandler.AddPhotos)
+			r.Delete("/{id}/photos/{photoId}", memoriesHandler.RemovePhoto)
 		})
 
 		r.Route("/api/locked-folders", func(r chi.Router) {
@@ -127,6 +148,8 @@ func main() {
 		r.Route("/api/users", func(r chi.Router) {
 			r.Put("/{id}", usersHandler.Update)
 			r.Put("/{id}/password", usersHandler.ChangePassword)
+			r.Post("/{id}/avatar", usersHandler.UploadAvatar)
+			r.Get("/{id}/avatar", usersHandler.StreamAvatar)
 
 			r.Group(func(r chi.Router) {
 				r.Use(authMiddleware.RequireAdmin)

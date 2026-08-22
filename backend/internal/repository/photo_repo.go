@@ -73,14 +73,26 @@ func (r *PhotoRepository) List(favoriteOnly bool, deletedOnly bool, searchQuery 
 	}
 
 	if fileType != "" {
-		conditions = append(conditions, "file_type = ?")
-		args = append(args, fileType)
+		normalized := strings.ToLower(fileType)
+		switch normalized {
+		case "gallery", "all":
+			conditions = append(conditions, "file_type IN ('image', 'photo', 'video')")
+		case "photos", "photo", "image", "images":
+			conditions = append(conditions, "file_type IN ('image', 'photo')")
+		case "videos", "video":
+			conditions = append(conditions, "file_type = 'video'")
+		case "documents", "document":
+			conditions = append(conditions, "file_type = 'document'")
+		default:
+			conditions = append(conditions, "file_type = ?")
+			args = append(args, fileType)
+		}
 	}
 
 	if lockedFolderID != "" {
 		conditions = append(conditions, "locked_folder_id = ?")
 		args = append(args, lockedFolderID)
-	} else if !deletedOnly && fileType == "" {
+	} else if !deletedOnly && (fileType == "" || strings.ToLower(fileType) == "gallery" || strings.ToLower(fileType) == "photos") {
 		// By default in main gallery, hide items placed inside locked folders unless specifically queried
 		conditions = append(conditions, "(locked_folder_id IS NULL OR locked_folder_id = '')")
 	}

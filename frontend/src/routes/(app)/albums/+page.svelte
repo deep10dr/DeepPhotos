@@ -57,7 +57,7 @@
 		lightboxIndex = index;
 		lightboxPhoto = {
 			...albumPhotos[index],
-			url: albumPhotos[index].url || `${appState.apiBaseUrl}/api/photos/${albumPhotos[index].id}/file`
+			url: albumPhotos[index].url || `${appState.apiBaseUrl}/api/media/${albumPhotos[index].id}/file`
 		};
 	}
 
@@ -106,7 +106,7 @@
 				return;
 			}
 
-			const updateRes = await apiFetch(`/api/photos/${lightboxPhoto.id}`, {
+			const updateRes = await apiFetch(`/api/media/${lightboxPhoto.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ locked_folder_id: selectedVaultFolderId })
@@ -155,13 +155,13 @@
 
 	async function fetchAvailablePhotos() {
 		try {
-			const res = await apiFetch('/api/photos?deleted=false');
+			const res = await apiFetch('/api/media?type=gallery&deleted=false');
 			if (res.ok) {
 				const data = await res.json();
 				availablePhotos = data.map((p: any) => ({
 					id: p.id,
 					title: p.title,
-					thumbnail_url: getMediaUrl(`/api/photos/${p.id}/thumbnail`)
+					thumbnail_url: getMediaUrl(`/api/media/${p.id}/thumbnail`)
 				}));
 			}
 		} catch (e) {

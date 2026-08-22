@@ -5,18 +5,17 @@
 	import { notify, confirmDialog } from '$lib/notify.svelte';
 	import DropZone from '$lib/components/DropZone.svelte';
 	import UploadButton from '$lib/components/UploadButton.svelte';
+	import MediaViewer from '$lib/components/MediaViewer.svelte';
 	import {
 		Image as ImageIcon,
 		Heart,
 		Calendar,
 		Download,
-		Trash2,
+		X,
 		ChevronLeft,
 		ChevronRight,
-		X,
-		Info,
+		Trash2,
 		Video,
-		FileText,
 		Lock,
 		Play,
 		ZoomIn,
@@ -26,7 +25,13 @@
 		AlertCircle,
 		ArrowLeft,
 		Sliders,
-		Maximize2
+		Scaling,
+		CheckSquare,
+		Square,
+		Sparkles,
+		Check,
+		FolderPlus,
+		Info
 	} from 'lucide-svelte';
 
 	interface PhotoItem {
@@ -54,6 +59,14 @@
 		description: string;
 	}
 
+	interface Memory {
+		id: string;
+		title: string;
+		description: string;
+		items_count: number;
+		cover_url?: string;
+	}
+
 	let photos = $state<PhotoItem[]>([]);
 	let lockedFolders = $state<LockedFolder[]>([]);
 	let isLoading = $state(true);
@@ -71,16 +84,140 @@
 	let vaultPasscode = $state('');
 	let vaultError = $state('');
 
+	// Multi-Select State
+	let isSelectionMode = $state(false);
+	let selectedIds = $state<string[]>([]);
+
+	// Add to Memory Modal State
+	let showAddToMemoryModal = $state(false);
+	let existingMemories = $state<Memory[]>([]);
+	let selectedMemoryId = $state('new');
+	let memoryTitle = $state('');
+	let memoryDesc = $state('');
+	let isSavingMemory = $state(false);
+
+	function toggleSelectPhoto(id: string, e?: Event) {
+		if (e) e.stopPropagation();
+		if (selectedIds.includes(id)) {
+			selectedIds = selectedIds.filter(i => i !== id);
+		} else {
+			selectedIds = [...selectedIds, id];
+		}
+	}
+
+	function selectAllPhotos() {
+		selectedIds = filteredPhotos.map(p => p.id);
+	}
+
+	function clearSelection() {
+		selectedIds = [];
+		isSelectionMode = false;
+	}
+
+	async function batchDeleteSelected() {
+		if (selectedIds.length === 0) return;
+		const count = selectedIds.length;
+		const confirmed = await confirmDialog.ask({
+			title: 'Move Selected Items to Bin',
+			message: `Move ${count} selected items to the bin?`,
+			confirmText: 'Yes, Move to Bin',
+			cancelText: 'Cancel',
+			type: 'warning'
+		});
+		if (!confirmed) return;
+
+		try {
+			for (const id of selectedIds) {
+				await apiFetch(`/api/media/${id}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ is_deleted: true })
+				});
+			}
+			notify.success(`${count} items moved to bin.`);
+			clearSelection();
+			fetchPhotos();
+		} catch (err) {
+			console.error('Error batch deleting:', err);
+			notify.error('Failed to move selected items to bin.');
+		}
+	}
+
+	async function openAddToMemoryModal() {
+		if (selectedIds.length === 0) return;
+		try {
+			const res = await apiFetch('/api/memories');
+			if (res.ok) {
+				existingMemories = await res.json();
+			}
+		} catch (err) {
+			console.error('Error loading memories:', err);
+		}
+		selectedMemoryId = existingMemories.length > 0 ? existingMemories[0].id : 'new';
+		memoryTitle = '';
+		memoryDesc = '';
+		showAddToMemoryModal = true;
+	}
+
+	async function saveToMemory() {
+		if (selectedIds.length === 0) return;
+		isSavingMemory = true;
+		try {
+			if (selectedMemoryId === 'new') {
+				if (!memoryTitle.trim()) {
+					notify.error('Please enter a Memory Title');
+					isSavingMemory = false;
+					return;
+				}
+				const res = await apiFetch('/api/memories', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title: memoryTitle.trim(),
+						description: memoryDesc.trim(),
+						photo_ids: selectedIds
+					})
+				});
+				if (res.ok) {
+					notify.success(`Created Memory "${memoryTitle}" with ${selectedIds.length} photos!`);
+					showAddToMemoryModal = false;
+					clearSelection();
+				} else {
+					notify.error('Failed to create memory.');
+				}
+			} else {
+				const res = await apiFetch(`/api/memories/${selectedMemoryId}/photos`, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ photo_ids: selectedIds })
+				});
+				if (res.ok) {
+					const targetMem = existingMemories.find(m => m.id === selectedMemoryId);
+					notify.success(`Added ${selectedIds.length} photos to Memory "${targetMem?.title || ''}"!`);
+					showAddToMemoryModal = false;
+					clearSelection();
+				} else {
+					notify.error('Failed to add photos to memory.');
+				}
+			}
+		} catch (err) {
+			console.error('Error saving memory:', err);
+			notify.error('Network error saving memory.');
+		} finally {
+			isSavingMemory = false;
+		}
+	}
+
 	async function fetchPhotos() {
 		isLoading = true;
 		try {
-			const res = await apiFetch('/api/photos?deleted=false');
+			const res = await apiFetch('/api/media?type=gallery&deleted=false');
 			if (res.ok) {
 				const data: PhotoItem[] = await res.json();
 				photos = data.filter(p => !p.locked_folder_id).map(p => ({
 					...p,
-					url: getMediaUrl(`/api/photos/${p.id}/file`),
-					thumbnail_url: getMediaUrl(`/api/photos/${p.id}/thumbnail`)
+					url: getMediaUrl(`/api/media/${p.id}/file`),
+					thumbnail_url: getMediaUrl(`/api/media/${p.id}/thumbnail`)
 				}));
 			}
 		} catch (e) {
@@ -121,6 +258,11 @@
 	);
 
 	function openPhoto(index: number) {
+		if (isSelectionMode) {
+			const item = filteredPhotos[index];
+			if (item) toggleSelectPhoto(item.id);
+			return;
+		}
 		selectedIndex = index;
 		zoomScale = 100;
 		showDetailsModal = false;
@@ -171,7 +313,7 @@
 		const updatedState = !photo.is_favorite;
 		photo.is_favorite = updatedState;
 		try {
-			await apiFetch(`/api/photos/${photo.id}`, {
+			await apiFetch(`/api/media/${photo.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ is_favorite: updatedState })
@@ -193,7 +335,7 @@
 		if (!confirmed) return;
 
 		try {
-			const res = await apiFetch(`/api/photos/${photo.id}`, {
+			const res = await apiFetch(`/api/media/${photo.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ is_deleted: true })
@@ -243,7 +385,7 @@
 				return;
 			}
 
-			const updateRes = await apiFetch(`/api/photos/${selectedPhoto.id}`, {
+			const updateRes = await apiFetch(`/api/media/${selectedPhoto.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ locked_folder_id: selectedVaultFolderId })
@@ -331,8 +473,25 @@
 			</button>
 		</div>
 
-		<!-- Reusable Upload Button -->
-		<UploadButton label="Upload" variant="primary" />
+		<!-- Action Controls -->
+		<div class="flex items-center gap-2">
+			<!-- Select Toggle Button -->
+			<button
+				type="button"
+				onclick={() => { isSelectionMode = !isSelectionMode; if (!isSelectionMode) selectedIds = []; }}
+				class={`px-3.5 py-1.5 rounded-xl text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5 ${
+					isSelectionMode
+						? 'bg-sky-500 text-white border-sky-400 shadow-sm'
+						: 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+				}`}
+			>
+				<CheckSquare class="w-3.5 h-3.5" />
+				<span>{isSelectionMode ? 'Cancel Select' : 'Select'}</span>
+			</button>
+
+			<!-- Reusable Upload Button -->
+			<UploadButton label="Upload" variant="primary" />
+		</div>
 	</div>
 
 	<div class="flex-1 overflow-y-auto min-h-0">
@@ -379,7 +538,7 @@
 								/>
 							{/if}
 
-							<div class="absolute inset-0 bg-gradient-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
+							<div class="absolute inset-0 bg-linear-to-t from-slate-900/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-between p-4">
 								<div class="text-white max-w-[65%]">
 									<p class="text-xs font-bold truncate">{photo.title}</p>
 									<p class="text-[10px] text-slate-300 truncate">{photo.taken_at || 'Recently'} • {formatBytes(photo.size)}</p>
@@ -413,9 +572,24 @@
 								</div>
 							</div>
 
-							{#if photo.is_favorite}
-								<div class="absolute top-3 right-3 p-1.5 rounded-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-rose-500 shadow-sm">
-									<Heart class="w-3.5 h-3.5 fill-rose-500" />
+							<!-- Selection Overlay Checkbox -->
+							{#if isSelectionMode}
+								<div
+									role="button"
+									tabindex="0"
+									onclick={(e) => toggleSelectPhoto(photo.id, e)}
+									onkeydown={(e) => e.key === 'Enter' && toggleSelectPhoto(photo.id, e)}
+									class={`absolute top-3 left-3 z-10 p-1.5 rounded-xl backdrop-blur-md transition-all cursor-pointer ${
+										selectedIds.includes(photo.id)
+											? 'bg-sky-500 text-white shadow-lg scale-105'
+											: 'bg-slate-950/40 text-white/70 hover:bg-slate-950/70'
+									}`}
+								>
+									{#if selectedIds.includes(photo.id)}
+										<CheckSquare class="w-5 h-5 text-white" />
+									{:else}
+										<Square class="w-5 h-5" />
+									{/if}
 								</div>
 							{/if}
 						</div>
@@ -424,260 +598,17 @@
 			</div>
 		{/if}
 	</div>
+</DropZone>
 
-	{#if selectedPhoto && selectedIndex !== null}
-		<!-- GOOGLE PHOTOS FULL-SCREEN THEATER MODE (Z-INDEX 9999 PREVENTS ANY OVERFLOW OR CLASHING) -->
-		<div class="fixed inset-0 z-[9999] w-screen h-screen bg-black/95 backdrop-blur-xl flex flex-col select-none overflow-hidden animate-fade-in">
-
-			<!-- TOP GOOGLE PHOTOS NAVIGATION OVERLAY TOOLBAR (Z-INDEX 10000) -->
-			<div class="absolute top-0 left-0 right-0 z-[10000] p-4 flex flex-wrap items-center justify-between gap-3 pointer-events-none">
-
-				<!-- Left: Back Arrow, Title & Counter -->
-				<div class="flex items-center gap-3 pointer-events-auto bg-slate-900/80 backdrop-blur-xl pl-2 pr-4 py-2 rounded-full border border-white/10 shadow-lg">
-					<button
-						type="button"
-						onclick={closePhoto}
-						title="Back to Gallery (Esc)"
-						class="p-2 rounded-full text-slate-200 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-					>
-						<ArrowLeft class="w-5 h-5" />
-					</button>
-					<div>
-						<h3 class="text-sm font-bold text-white flex items-center gap-2">
-							<span>{selectedPhoto.title}</span>
-							<span class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-white/15 text-slate-200">
-								{selectedIndex + 1} of {filteredPhotos.length}
-							</span>
-						</h3>
-						<p class="text-[11px] text-slate-400">{selectedPhoto.taken_at || 'Recently'} • {formatBytes(selectedPhoto.size)}</p>
-					</div>
-				</div>
-
-				<!-- Right: Resized to Fit Screen Badge & Action Buttons -->
-				<div class="flex items-center gap-2 pointer-events-auto">
-
-					<!-- Resized to Fit Screen Top Right Indicator Badge -->
-					<div class="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-900/80 backdrop-blur-xl border border-sky-500/30 text-sky-300 text-[11px] font-semibold shadow-lg">
-						<Maximize2 class="w-3.5 h-3.5 text-sky-400" />
-						<span>Resized to Fit Screen</span>
-					</div>
-
-					<!-- Action Buttons Group: Zoom, Favorite, Move to Vault, Details Info, Download, Trash, Close -->
-					<div class="flex items-center gap-1.5 sm:gap-2 bg-slate-900/80 backdrop-blur-xl px-2.5 py-1.5 rounded-full border border-white/10 shadow-lg">
-
-						{#if selectedPhoto.file_type !== 'video' && !selectedPhoto.mime_type.startsWith('video/')}
-							<button
-								type="button"
-								onclick={() => showZoomControls = !showZoomControls}
-								class={`p-2 rounded-full transition-all cursor-pointer ${
-									showZoomControls
-										? 'bg-sky-500 text-white shadow-md'
-										: 'text-slate-200 hover:bg-white/15'
-								}`}
-								title="Zoom Controls"
-							>
-								<Sliders class="w-5 h-5" />
-							</button>
-						{/if}
-
-						<button
-							type="button"
-							onclick={() => toggleFavorite(selectedPhoto)}
-							class={`p-2 rounded-full transition-all cursor-pointer ${
-								selectedPhoto.is_favorite
-									? 'text-rose-500 bg-white/15 shadow-md'
-									: 'text-slate-200 hover:bg-white/15'
-							}`}
-							title={selectedPhoto.is_favorite ? 'Remove from Favorites' : 'Add to Favorites'}
-						>
-							<Heart class={`w-5 h-5 ${selectedPhoto.is_favorite ? 'fill-rose-500 text-rose-500' : ''}`} />
-						</button>
-
-						<button
-							type="button"
-							onclick={(e) => openMoveToVaultDialog(selectedPhoto, e)}
-							class="p-2 rounded-full text-slate-200 hover:text-sky-300 hover:bg-white/15 transition-colors cursor-pointer"
-							title="Move to Locked Vault"
-						>
-							<Lock class="w-5 h-5 text-sky-400" />
-						</button>
-
-						<button
-							type="button"
-							onclick={() => showDetailsModal = !showDetailsModal}
-							class={`p-2 rounded-full transition-all cursor-pointer ${
-								showDetailsModal
-									? 'bg-sky-500 text-white shadow-md'
-									: 'text-slate-200 hover:bg-white/15'
-							}`}
-							title="Info & Technical Details"
-						>
-							<Info class="w-5 h-5" />
-						</button>
-
-						<a
-							href={selectedPhoto.url}
-							download={selectedPhoto.filename}
-							target="_blank"
-							class="p-2 rounded-full text-slate-200 hover:text-white hover:bg-white/15 transition-colors cursor-pointer"
-							title="Download Original"
-						>
-							<Download class="w-5 h-5" />
-						</a>
-
-						<button
-							type="button"
-							onclick={() => deletePhoto(selectedPhoto)}
-							class="p-2 rounded-full text-slate-200 hover:text-rose-400 hover:bg-white/15 transition-colors cursor-pointer"
-							title="Move to Bin"
-						>
-							<Trash2 class="w-5 h-5" />
-						</button>
-
-						<button
-							type="button"
-							onclick={closePhoto}
-							title="Close (Esc)"
-							class="p-2 rounded-full text-slate-200 hover:text-white hover:bg-white/15 transition-colors cursor-pointer ml-1"
-						>
-							<X class="w-6 h-6" />
-						</button>
-
-					</div>
-
-				</div>
-
-			</div>
-
-			<!-- FLOATING PREVIOUS ARROW (Z-INDEX 10000) -->
-			<button
-				type="button"
-				onclick={prevPhoto}
-				title="Previous (Left Arrow)"
-				class="absolute left-4 sm:left-8 top-1/2 -translate-y-1/2 z-[10000] w-12 h-12 rounded-full bg-slate-900/70 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md group shadow-xl"
-			>
-				<ChevronLeft class="w-7 h-7 transition-transform group-hover:-translate-x-0.5" />
-			</button>
-
-			<!-- FLOATING NEXT ARROW (Z-INDEX 10000) -->
-			<button
-				type="button"
-				onclick={nextPhoto}
-				title="Next (Right Arrow)"
-				class="absolute right-4 sm:right-8 top-1/2 -translate-y-1/2 z-[10000] w-12 h-12 rounded-full bg-slate-900/70 hover:bg-white/20 text-white flex items-center justify-center transition-all cursor-pointer backdrop-blur-md group shadow-xl"
-			>
-				<ChevronRight class="w-7 h-7 transition-transform group-hover:translate-x-0.5" />
-			</button>
-
-			<!-- GOOGLE PHOTOS CENTER THEATER DISPLAY CANVAS (PREVENTS IMAGE CUT-OFF) -->
-			<div class="flex-1 w-full h-full min-h-0 min-w-0 relative flex items-center justify-center pt-20 pb-20 px-4 md:px-16 overflow-hidden">
-				{#if selectedPhoto.file_type === 'video' || selectedPhoto.mime_type.startsWith('video/')}
-					<video src={selectedPhoto.url} controls autoplay class="max-w-[calc(100vw-64px)] max-h-[calc(100vh-140px)] w-auto h-auto object-contain rounded-xl shadow-2xl"></video>
-				{:else}
-					<img
-						src={selectedPhoto.url}
-						alt={selectedPhoto.title}
-						style={`transform: scale(${zoomScale / 100}); transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);`}
-						class="max-w-[calc(100vw-64px)] max-h-[calc(100vh-140px)] w-auto h-auto object-contain select-none cursor-grab active:cursor-grabbing rounded-xl shadow-2xl"
-					/>
-				{/if}
-			</div>
-
-			<!-- FLOATING BOTTOM ZOOM BAR (Z-INDEX 10000) -->
-			{#if showZoomControls && selectedPhoto.file_type !== 'video' && !selectedPhoto.mime_type.startsWith('video/')}
-				<div class="absolute bottom-6 left-1/2 -translate-x-1/2 z-[10000] p-3 px-6 bg-slate-900/90 backdrop-blur-xl border border-slate-800 rounded-2xl flex items-center justify-center gap-4 shadow-2xl animate-fade-in">
-					<div class="flex items-center gap-3">
-						<button
-							type="button"
-							onclick={zoomOut}
-							title="Zoom Out (-25%)"
-							class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-						>
-							<ZoomOut class="w-4 h-4" />
-						</button>
-
-						<input
-							type="range"
-							min="40"
-							max="400"
-							step="5"
-							bind:value={zoomScale}
-							class="w-40 md:w-64 h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-sky-400"
-							title={`Current Zoom: ${zoomScale}%`}
-						/>
-
-						<button
-							type="button"
-							onclick={zoomIn}
-							title="Zoom In (+25%)"
-							class="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
-						>
-							<ZoomIn class="w-4 h-4" />
-						</button>
-
-						<span class="text-xs font-mono font-bold text-sky-400 w-12 text-center">{zoomScale}%</span>
-
-						<button
-							type="button"
-							onclick={resetZoom}
-							title="Reset Zoom (100%)"
-							class="px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs text-slate-200 font-semibold flex items-center gap-1 transition-colors cursor-pointer"
-						>
-							<RotateCcw class="w-3.5 h-3.5" />
-							<span>Reset</span>
-						</button>
-					</div>
-				</div>
-			{/if}
-
-			<!-- GOOGLE PHOTOS RIGHT SLIDE-OVER INFO DRAWER (Z-INDEX 10000) -->
-			{#if showDetailsModal}
-				<div class="fixed top-0 right-0 bottom-0 w-80 sm:w-96 bg-slate-900/95 backdrop-blur-2xl z-[10000] p-6 border-l border-slate-800 shadow-2xl overflow-y-auto space-y-6 animate-fade-in text-white">
-					<div class="flex items-center justify-between border-b border-slate-800 pb-4">
-						<h4 class="font-bold text-base flex items-center gap-2">
-							<Info class="w-5 h-5 text-sky-400" />
-							Info & Details
-						</h4>
-						<button
-							type="button"
-							onclick={() => showDetailsModal = false}
-							class="p-1 text-slate-400 hover:text-white rounded-full hover:bg-white/10 transition-colors"
-						>
-							<X class="w-5 h-5" />
-						</button>
-					</div>
-
-					<div class="space-y-4 text-xs">
-						<div class="space-y-1">
-							<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">File Name</p>
-							<p class="font-bold text-slate-100 text-sm break-all">{selectedPhoto.filename}</p>
-						</div>
-
-						<div class="space-y-1">
-							<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">MIME & Category</p>
-							<p class="font-semibold text-slate-200">{selectedPhoto.mime_type} ({selectedPhoto.file_type})</p>
-						</div>
-
-						<div class="space-y-1">
-							<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Resolution & Dimensions</p>
-							<p class="font-semibold text-slate-200">{selectedPhoto.width > 0 ? `${selectedPhoto.width} × ${selectedPhoto.height} px` : 'Native Resolution'}</p>
-						</div>
-
-						<div class="space-y-1">
-							<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">File Size</p>
-							<p class="font-semibold text-slate-200">{formatBytes(selectedPhoto.size)}</p>
-						</div>
-
-						<div class="space-y-1">
-							<p class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Device & Ingest Info</p>
-							<p class="font-semibold text-slate-200">{selectedPhoto.exif_model || 'DeepPhotos Ingest'}</p>
-						</div>
-					</div>
-				</div>
-			{/if}
-		</div>
-	{/if}
-
+<MediaViewer
+	photos={filteredPhotos}
+	selectedIndex={selectedIndex}
+	onclose={closePhoto}
+	onnavigate={(idx) => selectedIndex = idx}
+	ontoggleFavorite={(photo) => toggleFavorite(photo)}
+	ondelete={(photo) => deletePhoto(photo)}
+	onmoveToVault={(photo) => openMoveToVaultDialog(photo)}
+/>
 	<!-- MOVE TO LOCKED FOLDER DIALOG (Z-INDEX 10001) -->
 	{#if showMoveToVaultModal && selectedPhoto}
 		<div class="fixed inset-0 z-[10001] bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
@@ -752,4 +683,130 @@
 		</div>
 	{/if}
 
-</DropZone>
+	<!-- Floating Multi-Selection Action Bar -->
+	{#if isSelectionMode && selectedIds.length > 0}
+		<div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-[1000] bg-white/95 dark:bg-slate-900/95 text-slate-900 dark:text-white backdrop-blur-xl border border-slate-200 dark:border-slate-700/80 rounded-2xl px-5 py-3 shadow-2xl flex items-center gap-4 animate-fade-in max-w-max">
+			<span class="text-xs font-bold text-sky-500 dark:text-sky-400">{selectedIds.length} Selected</span>
+
+			<div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+
+			<!-- Add to Memory Button -->
+			<button
+				type="button"
+				onclick={openAddToMemoryModal}
+				class="px-3.5 py-1.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm shadow-sky-500/30"
+			>
+				<Sparkles class="w-3.5 h-3.5" />
+				<span>Add to Memory</span>
+			</button>
+
+			<!-- Move to Bin Button -->
+			<button
+				type="button"
+				onclick={batchDeleteSelected}
+				class="px-3.5 py-1.5 rounded-xl bg-rose-50 dark:bg-rose-500/20 hover:bg-rose-500 text-rose-600 dark:text-rose-300 hover:text-white border border-rose-200 dark:border-rose-500/30 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer"
+			>
+				<Trash2 class="w-3.5 h-3.5" />
+				<span>Move to Bin</span>
+			</button>
+
+			<div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+
+			<button
+				type="button"
+				onclick={selectAllPhotos}
+				class="text-xs text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-medium cursor-pointer"
+			>
+				Select All
+			</button>
+
+			<button
+				type="button"
+				onclick={() => selectedIds = []}
+				class="text-xs text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 cursor-pointer"
+			>
+				Deselect
+			</button>
+		</div>
+	{/if}
+
+	<!-- Add to Memory Dialog Modal -->
+	{#if showAddToMemoryModal}
+		<div class="fixed inset-0 z-[10000] bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 animate-fade-in w-full h-full">
+			<div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-2xl max-w-md w-full space-y-5 animate-fade-in">
+				<div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+					<div class="flex items-center gap-2.5">
+						<div class="w-10 h-10 rounded-2xl bg-sky-100 dark:bg-sky-950 text-sky-500 flex items-center justify-center">
+							<Sparkles class="w-5 h-5" />
+						</div>
+						<div>
+							<h3 class="text-base font-bold text-slate-900 dark:text-white">Add {selectedIds.length} Photos to Memory</h3>
+							<p class="text-xs text-slate-500 dark:text-slate-400">Save to an existing memory or create a new collection</p>
+						</div>
+					</div>
+					<button type="button" onclick={() => showAddToMemoryModal = false} class="p-1 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
+						<X class="w-5 h-5" />
+					</button>
+				</div>
+
+				<div class="space-y-4">
+					<div class="space-y-1.5">
+						<label for="memory-target-select" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Target Memory</label>
+						<select
+							id="memory-target-select"
+							bind:value={selectedMemoryId}
+							class="w-full h-10 px-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-sky-400"
+						>
+							<option value="new">✨ + Create New Memory Collection</option>
+							{#each existingMemories as mem}
+								<option value={mem.id}>📖 {mem.title} ({mem.items_count} items)</option>
+							{/each}
+						</select>
+					</div>
+
+					{#if selectedMemoryId === 'new'}
+						<div class="space-y-1.5">
+							<label for="memory-title-input" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Memory Title *</label>
+							<input
+								id="memory-title-input"
+								type="text"
+								bind:value={memoryTitle}
+								placeholder="e.g. Summer Vacation 2026, Birthday Trip"
+								class="w-full h-10 px-3.5 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-sky-400"
+							/>
+						</div>
+
+						<div class="space-y-1.5">
+							<label for="memory-desc-input" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Description (Optional)</label>
+							<textarea
+								id="memory-desc-input"
+								bind:value={memoryDesc}
+								rows={2}
+								placeholder="Add details or notes about this memory..."
+								class="w-full p-3 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 focus:outline-none focus:border-sky-400 resize-none"
+							></textarea>
+						</div>
+					{/if}
+				</div>
+
+				<div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+					<button
+						type="button"
+						onclick={() => showAddToMemoryModal = false}
+						class="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+					>
+						Cancel
+					</button>
+					<button
+						type="button"
+						onclick={saveToMemory}
+						disabled={isSavingMemory}
+						class="px-5 py-2 rounded-xl bg-sky-400 hover:bg-sky-500 text-white text-xs font-bold shadow-sm shadow-sky-300/50 flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+					>
+						<Sparkles class="w-4 h-4" />
+						<span>{selectedMemoryId === 'new' ? 'Create & Add Photos' : 'Add Photos'}</span>
+					</button>
+				</div>
+			</div>
+		</div>
+	{/if}

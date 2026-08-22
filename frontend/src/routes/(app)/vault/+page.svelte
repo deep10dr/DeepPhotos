@@ -63,13 +63,13 @@
 	async function fetchLockedFolderMedia(folderId: string) {
 		isFetchingMedia = true;
 		try {
-			const res = await apiFetch(`/api/photos?locked_folder_id=${folderId}`);
+			const res = await apiFetch(`/api/media?locked_folder_id=${folderId}`);
 			if (res.ok) {
 				const data = await res.json();
 				lockedMediaItems = data.map((item: any) => ({
 					...item,
-					url: getMediaUrl(`/api/photos/${item.id}/file`),
-					thumbnail_url: getMediaUrl(`/api/photos/${item.id}/thumbnail`)
+					url: getMediaUrl(`/api/media/${item.id}/file`),
+					thumbnail_url: getMediaUrl(`/api/media/${item.id}/thumbnail`)
 				}));
 			}
 		} catch (e) {

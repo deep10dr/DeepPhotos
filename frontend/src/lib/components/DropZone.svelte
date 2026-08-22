@@ -71,13 +71,14 @@
 					formData.append('files', file);
 				}
 
-				const res = await apiFetch('/api/photos/upload', {
+				const res = await apiFetch('/api/media/upload', {
 					method: 'POST',
 					body: formData
 				});
 
 				if (res.ok) {
-					invalidateCache('/api/photos');
+					invalidateCache('/api/media');
+					invalidateCache('/api/gallery');
 					appState.refreshPhotos();
 					notify.success('Media uploaded successfully!');
 					onUploadComplete?.();
@@ -125,14 +126,15 @@
 			isUploading = true;
 			onUploadStart?.();
 			try {
-				const res = await apiFetch('/api/photos/upload-url', {
+				const res = await apiFetch('/api/media/upload-url', {
 					method: 'POST',
 					headers: { 'Content-Type': 'application/json' },
 					body: JSON.stringify({ url: urlToUpload })
 				});
 
 				if (res.ok) {
-					invalidateCache('/api/photos');
+					invalidateCache('/api/media');
+					invalidateCache('/api/gallery');
 					appState.refreshPhotos();
 					notify.success('Media imported from URL!');
 					onUploadComplete?.();

@@ -4,17 +4,17 @@
 </script>
 
 <!-- Global Toast Container (Fixed Top-Right) -->
-<div class="fixed top-5 right-5 z-[999999] flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0">
+<div class="fixed top-5 right-5 z-999999 flex flex-col gap-3 max-w-sm w-full pointer-events-none px-4 sm:px-0">
 	{#each notify.toasts as toast (toast.id)}
 		<div
 			class={`pointer-events-auto rounded-2xl p-4 shadow-xl border backdrop-blur-2xl transition-all duration-300 animate-fade-in flex items-start justify-between gap-3 ${
 				toast.type === 'success'
-					? 'bg-emerald-950/90 dark:bg-emerald-950/90 text-emerald-100 border-emerald-500/40 shadow-emerald-950/50'
+					? 'bg-emerald-50 dark:bg-emerald-950/90 text-emerald-900 dark:text-emerald-100 border-emerald-200 dark:border-emerald-500/40 shadow-emerald-500/10'
 					: toast.type === 'error'
-					? 'bg-rose-950/90 dark:bg-rose-950/90 text-rose-100 border-rose-500/40 shadow-rose-950/50'
+					? 'bg-rose-50 dark:bg-rose-950/90 text-rose-900 dark:text-rose-100 border-rose-200 dark:border-rose-500/40 shadow-rose-500/10'
 					: toast.type === 'warning'
-					? 'bg-amber-950/90 dark:bg-amber-950/90 text-amber-100 border-amber-500/40 shadow-amber-950/50'
-					: 'bg-slate-900/90 dark:bg-slate-900/90 text-slate-100 border-sky-500/40 shadow-slate-950/50'
+					? 'bg-amber-50 dark:bg-amber-950/90 text-amber-900 dark:text-amber-100 border-amber-200 dark:border-amber-500/40 shadow-amber-500/10'
+					: 'bg-white dark:bg-slate-900/90 text-slate-900 dark:text-slate-100 border-sky-200 dark:border-sky-500/40 shadow-sky-500/10'
 			}`}
 		>
 			<div class="flex items-start gap-3 min-w-0">

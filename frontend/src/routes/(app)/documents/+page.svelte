@@ -21,12 +21,12 @@
 	async function fetchDocuments() {
 		isLoading = true;
 		try {
-			const res = await apiFetch('/api/photos?type=document&deleted=false');
+			const res = await apiFetch('/api/media?type=document&deleted=false');
 			if (res.ok) {
 				const data: DocumentItem[] = await res.json();
 				docs = data.map(d => ({
 					...d,
-					url: getMediaUrl(`/api/photos/${d.id}/file`)
+					url: getMediaUrl(`/api/media/${d.id}/file`)
 				}));
 			}
 		} catch (e) {

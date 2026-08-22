@@ -47,13 +47,14 @@
 		}
 
 		try {
-			const res = await apiFetch('/api/photos/upload', {
+			const res = await apiFetch('/api/media/upload', {
 				method: 'POST',
 				body: formData
 			});
 
 			if (res.ok) {
-				invalidateCache('/api/photos');
+				invalidateCache('/api/media');
+				invalidateCache('/api/gallery');
 				appState.refreshPhotos();
 				notify.success('Files uploaded successfully!');
 				onUploadComplete?.();

@@ -23,13 +23,13 @@
 	async function fetchBinItems() {
 		isLoading = true;
 		try {
-			const res = await apiFetch('/api/photos?deleted=true');
+			const res = await apiFetch('/api/media?deleted=true');
 			if (res.ok) {
 				const data: DeletedPhoto[] = await res.json();
 				binnedItems = data.map(item => ({
 					...item,
-					url: getMediaUrl(`/api/photos/${item.id}/file`),
-					thumbnail_url: getMediaUrl(`/api/photos/${item.id}/thumbnail`)
+					url: getMediaUrl(`/api/media/${item.id}/file`),
+					thumbnail_url: getMediaUrl(`/api/media/${item.id}/thumbnail`)
 				}));
 			}
 		} catch (e) {
@@ -57,7 +57,7 @@
 		if (!confirmed) return;
 
 		try {
-			const res = await apiFetch('/api/photos/batch-restore', {
+			const res = await apiFetch('/api/media/batch-restore', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ ids: [id] })
@@ -90,7 +90,7 @@
 
 		const ids = binnedItems.map((item) => item.id);
 		try {
-			const res = await apiFetch('/api/photos/batch-restore', {
+			const res = await apiFetch('/api/media/batch-restore', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ ids })
@@ -123,7 +123,7 @@
 
 		const ids = binnedItems.map((item) => item.id);
 		try {
-			const res = await apiFetch('/api/photos/batch-delete', {
+			const res = await apiFetch('/api/media/batch-delete', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ ids })

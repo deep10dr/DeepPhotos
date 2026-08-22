@@ -115,15 +115,34 @@ func migrateSchema(db *sql.DB) error {
 		status TEXT NOT NULL,
 		created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 	);
+
+	CREATE TABLE IF NOT EXISTS memories (
+		id TEXT PRIMARY KEY,
+		title TEXT NOT NULL,
+		description TEXT,
+		cover_photo_id TEXT,
+		created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+		updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+	);
+
+	CREATE TABLE IF NOT EXISTS memory_photos (
+		memory_id TEXT NOT NULL,
+		photo_id TEXT NOT NULL,
+		PRIMARY KEY (memory_id, photo_id),
+		FOREIGN KEY (memory_id) REFERENCES memories(id) ON DELETE CASCADE,
+		FOREIGN KEY (photo_id) REFERENCES photos(id) ON DELETE CASCADE
+	);
 	`
 	if _, err := db.Exec(schema); err != nil {
 		return err
 	}
 
-	// Safe alter columns for existing databases
-	db.Exec(`ALTER TABLE photos ADD COLUMN file_type TEXT NOT NULL DEFAULT 'image';`)
-	db.Exec(`ALTER TABLE photos ADD COLUMN exif_model TEXT;`)
-	db.Exec(`ALTER TABLE photos ADD COLUMN locked_folder_id TEXT;`)
+	// High-performance B-Tree indexes for 500,000+ records
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_photos_type_deleted ON photos(file_type, is_deleted);`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_photos_user_id ON photos(user_id);`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_photos_created_at ON photos(created_at DESC);`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_photos_locked_folder ON photos(locked_folder_id);`)
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_photos_favorite ON photos(is_favorite);`)
 
 	return nil
 }

@@ -40,7 +40,9 @@ const inFlight = new Map<string, Promise<unknown>>();
 
 /** Default TTL per endpoint (in milliseconds) */
 const TTL_MAP: Record<string, number> = {
-	'/api/photos':         30_000,  // 30 sec  — gallery data
+	'/api/media':          30_000,  // 30 sec  — media data
+	'/api/gallery':        30_000,  // 30 sec  — gallery data
+	'/api/documents':      30_000,  // 30 sec  — documents data
 	'/api/albums':         60_000,  // 60 sec  — album list
 	'/api/locked-folders': 60_000,  // 60 sec  — locked folders
 	'/api/audit-logs':     120_000, // 2 min   — audit logs (rarely change)

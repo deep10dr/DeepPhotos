@@ -45,6 +45,16 @@ func GenerateObjectKey(category, filename string) (objectKey string, thumbnailKe
 	return objectKey, thumbnailKey
 }
 
+// GenerateAvatarKey formats user profile photo path under dedicated avatars/ bucket path: avatars/{userID}/{uuid}/{filename}
+func GenerateAvatarKey(userID, filename string) string {
+	cleanFilename := filepath.Base(filename)
+	if cleanFilename == "" || cleanFilename == "." {
+		cleanFilename = "avatar.jpg"
+	}
+	u := uuid.New().String()[:8]
+	return fmt.Sprintf("avatars/%s/%s_%s", userID, u, cleanFilename)
+}
+
 func InitMinio(cfg *config.Config) (*StorageClient, error) {
 	client, err := minio.New(cfg.MinioEndpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(cfg.MinioAccessKey, cfg.MinioSecretKey, ""),
