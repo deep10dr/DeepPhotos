@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { appState, type RegisteredUser, type LoginLog } from '$lib/state.svelte';
 	import { apiFetch } from '$lib/api';
+	import { notify, confirmDialog } from '$lib/notify.svelte';
 	import {
 		User,
 		ShieldCheck,
@@ -136,9 +137,22 @@
 	}
 
 	async function handleDeleteUser(userId: string, userName: string) {
-		if (confirm(`Are you sure you want to delete user "${userName}"?`)) {
+		const confirmed = await confirmDialog.ask({
+			title: 'Delete User Account',
+			message: `Are you sure you want to delete user account "${userName}"? This cannot be undone.`,
+			confirmText: 'Yes, Delete User',
+			cancelText: 'Cancel',
+			type: 'danger'
+		});
+		if (!confirmed) return;
+
+		try {
 			await appState.deleteUser(userId);
+			notify.success(`User "${userName}" deleted.`);
 			fetchUsers();
+		} catch (err) {
+			console.error('Error deleting user:', err);
+			notify.error('Failed to delete user account.');
 		}
 	}
 </script>

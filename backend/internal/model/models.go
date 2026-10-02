@@ -52,6 +52,29 @@ type Album struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+// Memory represents a user-created memory collection
+type Memory struct {
+	ID           string    `json:"id"`
+	Title        string    `json:"title"`
+	Description  string    `json:"description"`
+	CoverPhotoID string    `json:"cover_photo_id,omitempty"`
+	CoverURL     string    `json:"cover_url,omitempty"`
+	ItemsCount   int       `json:"items_count"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+	Photos       []Photo   `json:"photos,omitempty"`
+}
+
+type CreateMemoryRequest struct {
+	Title       string   `json:"title"`
+	Description string   `json:"description"`
+	PhotoIDs    []string `json:"photo_ids,omitempty"`
+}
+
+type AddPhotosToMemoryRequest struct {
+	PhotoIDs []string `json:"photo_ids"`
+}
+
 // LockedFolder represents a passcode-protected folder
 type LockedFolder struct {
 	ID           string    `json:"id"`

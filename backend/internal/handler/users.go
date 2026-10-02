@@ -2,22 +2,29 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
 
 	"deepphotos/backend/internal/middleware"
 	"deepphotos/backend/internal/model"
 	"deepphotos/backend/internal/repository"
+	"deepphotos/backend/internal/storage"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UsersHandler struct {
-	userRepo *repository.UserRepository
+	userRepo      *repository.UserRepository
+	storageClient *storage.StorageClient
 }
 
-func NewUsersHandler(userRepo *repository.UserRepository) *UsersHandler {
-	return &UsersHandler{userRepo: userRepo}
+func NewUsersHandler(userRepo *repository.UserRepository, storageClient *storage.StorageClient) *UsersHandler {
+	return &UsersHandler{
+		userRepo:      userRepo,
+		storageClient: storageClient,
+	}
 }
 
 func (h *UsersHandler) List(w http.ResponseWriter, r *http.Request) {
@@ -208,4 +215,89 @@ func (h *UsersHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(model.SuccessResponse{Message: "User deleted successfully"})
+}
+
+// UploadAvatar handles profile photo uploads into dedicated avatars/ storage bucket
+func (h *UsersHandler) UploadAvatar(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	user, err := h.userRepo.FindByID(id)
+	if err != nil || user == nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusNotFound)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: "User not found"})
+		return
+	}
+
+	err = r.ParseMultipartForm(10 << 20) // 10MB max avatar size
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: "Failed to parse avatar multipart form"})
+		return
+	}
+
+	file, header, err := r.FormFile("avatar")
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: "Missing 'avatar' image file"})
+		return
+	}
+	defer file.Close()
+
+	contentType := header.Header.Get("Content-Type")
+	if contentType == "" {
+		contentType = "image/jpeg"
+	}
+
+	avatarKey := storage.GenerateAvatarKey(user.ID, header.Filename)
+	if err := h.storageClient.UploadObject(r.Context(), avatarKey, file, header.Size, contentType); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: "Failed to store avatar: " + err.Error()})
+		return
+	}
+
+	user.Avatar = "/api/users/" + user.ID + "/avatar?key=" + avatarKey
+	if err := h.userRepo.Update(user); err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(user)
+}
+
+// StreamAvatar streams a user's avatar image from storage
+func (h *UsersHandler) StreamAvatar(w http.ResponseWriter, r *http.Request) {
+	key := r.URL.Query().Get("key")
+	id := chi.URLParam(r, "id")
+
+	if key == "" {
+		user, err := h.userRepo.FindByID(id)
+		if err != nil || user == nil || user.Avatar == "" {
+			http.Error(w, "Avatar not found", http.StatusNotFound)
+			return
+		}
+		if len(user.Avatar) > 4 && user.Avatar[:4] == "http" {
+			http.Redirect(w, r, user.Avatar, http.StatusFound)
+			return
+		}
+		key = user.Avatar
+	}
+
+	reader, size, contentType, err := h.storageClient.GetObject(r.Context(), key)
+	if err != nil {
+		http.Error(w, "Avatar not found in storage", http.StatusNotFound)
+		return
+	}
+	defer reader.Close()
+
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", size))
+	w.Header().Set("Cache-Control", "public, max-age=86400")
+	io.Copy(w, reader)
 }

@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
 	import { apiFetch, getMediaUrl } from '$lib/api';
+	import { notify, confirmDialog } from '$lib/notify.svelte';
 	import { Lock, Unlock, Key, ShieldCheck, FolderClosed, Plus, X, Trash2, User, Clock, AlertCircle, FileText, Image as ImageIcon, Video, Play, Download } from 'lucide-svelte';
 
 	interface LockedFolder {
@@ -62,13 +63,13 @@
 	async function fetchLockedFolderMedia(folderId: string) {
 		isFetchingMedia = true;
 		try {
-			const res = await apiFetch(`/api/photos?locked_folder_id=${folderId}`);
+			const res = await apiFetch(`/api/media?locked_folder_id=${folderId}`);
 			if (res.ok) {
 				const data = await res.json();
 				lockedMediaItems = data.map((item: any) => ({
 					...item,
-					url: getMediaUrl(`/api/photos/${item.id}/file`),
-					thumbnail_url: getMediaUrl(`/api/photos/${item.id}/thumbnail`)
+					url: getMediaUrl(`/api/media/${item.id}/file`),
+					thumbnail_url: getMediaUrl(`/api/media/${item.id}/thumbnail`)
 				}));
 			}
 		} catch (e) {
@@ -163,15 +164,26 @@
 
 	async function handleDeleteFolder(id: string, name: string, e: Event) {
 		e.stopPropagation();
-		if (!confirm(`Delete locked folder "${name}"?`)) return;
+		const confirmed = await confirmDialog.ask({
+			title: 'Delete Locked Vault Folder',
+			message: `Delete locked folder "${name}"?`,
+			confirmText: 'Yes, Delete Folder',
+			cancelText: 'Cancel',
+			type: 'danger'
+		});
+		if (!confirmed) return;
 
 		try {
 			const res = await apiFetch(`/api/locked-folders/${id}`, { method: 'DELETE' });
 			if (res.ok) {
+				notify.success(`Locked folder "${name}" deleted.`);
 				await fetchLockedFolders();
+			} else {
+				notify.error('Failed to delete locked folder.');
 			}
 		} catch (err) {
 			console.error('Error deleting locked folder:', err);
+			notify.error('Network error deleting locked folder.');
 		}
 	}
 

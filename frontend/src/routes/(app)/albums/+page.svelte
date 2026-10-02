@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { appState } from '$lib/state.svelte';
 	import { apiFetch, getMediaUrl } from '$lib/api';
+	import { notify, confirmDialog } from '$lib/notify.svelte';
 	import { FolderClosed, Plus, Image as ImageIcon, X, Trash2, ArrowLeft, CheckCircle2, Check, PlusCircle, Lock, ChevronLeft, ChevronRight, ShieldCheck, AlertCircle } from 'lucide-svelte';
 
 	interface Album {
@@ -56,7 +57,7 @@
 		lightboxIndex = index;
 		lightboxPhoto = {
 			...albumPhotos[index],
-			url: albumPhotos[index].url || `${appState.apiBaseUrl}/api/photos/${albumPhotos[index].id}/file`
+			url: albumPhotos[index].url || `${appState.apiBaseUrl}/api/media/${albumPhotos[index].id}/file`
 		};
 	}
 
@@ -105,7 +106,7 @@
 				return;
 			}
 
-			const updateRes = await apiFetch(`/api/photos/${lightboxPhoto.id}`, {
+			const updateRes = await apiFetch(`/api/media/${lightboxPhoto.id}`, {
 				method: 'PUT',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({ locked_folder_id: selectedVaultFolderId })
@@ -154,13 +155,13 @@
 
 	async function fetchAvailablePhotos() {
 		try {
-			const res = await apiFetch('/api/photos?deleted=false');
+			const res = await apiFetch('/api/media?type=gallery&deleted=false');
 			if (res.ok) {
 				const data = await res.json();
 				availablePhotos = data.map((p: any) => ({
 					id: p.id,
 					title: p.title,
-					thumbnail_url: getMediaUrl(`/api/photos/${p.id}/thumbnail`)
+					thumbnail_url: getMediaUrl(`/api/media/${p.id}/thumbnail`)
 				}));
 			}
 		} catch (e) {
@@ -209,16 +210,27 @@
 
 	async function handleDeleteAlbum(id: string, name: string, e: Event) {
 		e.stopPropagation();
-		if (!confirm(`Delete album "${name}"?`)) return;
+		const confirmed = await confirmDialog.ask({
+			title: 'Delete Album',
+			message: `Delete album "${name}"? Photos inside will remain in your gallery.`,
+			confirmText: 'Yes, Delete Album',
+			cancelText: 'Cancel',
+			type: 'danger'
+		});
+		if (!confirmed) return;
 
 		try {
 			const res = await apiFetch(`/api/albums/${id}`, { method: 'DELETE' });
 			if (res.ok) {
+				notify.success(`Album "${name}" deleted.`);
 				if (selectedAlbum?.id === id) closeAlbum();
 				await fetchAlbums();
+			} else {
+				notify.error('Failed to delete album.');
 			}
 		} catch (err) {
 			console.error('Error deleting album:', err);
+			notify.error('Network error deleting album.');
 		}
 	}
 

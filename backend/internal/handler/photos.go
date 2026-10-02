@@ -88,8 +88,8 @@ func (h *PhotosHandler) UploadURL(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	photo.URL = "/api/photos/" + photo.ID + "/file"
-	photo.ThumbnailURL = "/api/photos/" + photo.ID + "/thumbnail"
+	photo.URL = "/api/media/" + photo.ID + "/file"
+	photo.ThumbnailURL = "/api/media/" + photo.ID + "/thumbnail"
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -113,8 +113,59 @@ func (h *PhotosHandler) List(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for i := range photos {
-		photos[i].URL = "/api/photos/" + photos[i].ID + "/file"
-		photos[i].ThumbnailURL = "/api/photos/" + photos[i].ID + "/thumbnail"
+		photos[i].URL = "/api/media/" + photos[i].ID + "/file"
+		photos[i].ThumbnailURL = "/api/media/" + photos[i].ID + "/thumbnail"
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(photos)
+}
+
+// ListGallery handles GET /api/gallery (e.g. /api/gallery?type=photos&deleted=false, /api/gallery?type=video, /api/gallery?type=all)
+func (h *PhotosHandler) ListGallery(w http.ResponseWriter, r *http.Request) {
+	fileType := r.URL.Query().Get("type")
+	if fileType == "" {
+		fileType = "gallery"
+	}
+	favOnly := r.URL.Query().Get("favorite") == "true"
+	delOnly := r.URL.Query().Get("deleted") == "true"
+	search := r.URL.Query().Get("search")
+	lockedFolderID := r.URL.Query().Get("locked_folder_id")
+
+	photos, err := h.photoRepo.List(favOnly, delOnly, search, fileType, lockedFolderID)
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	for i := range photos {
+		photos[i].URL = "/api/media/" + photos[i].ID + "/file"
+		photos[i].ThumbnailURL = "/api/media/" + photos[i].ID + "/thumbnail"
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(photos)
+}
+
+// ListDocuments handles GET /api/documents (e.g. /api/documents?deleted=false)
+func (h *PhotosHandler) ListDocuments(w http.ResponseWriter, r *http.Request) {
+	favOnly := r.URL.Query().Get("favorite") == "true"
+	delOnly := r.URL.Query().Get("deleted") == "true"
+	search := r.URL.Query().Get("search")
+
+	photos, err := h.photoRepo.List(favOnly, delOnly, search, "document", "")
+	if err != nil {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(model.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	for i := range photos {
+		photos[i].URL = "/api/media/" + photos[i].ID + "/file"
+		photos[i].ThumbnailURL = "/api/media/" + photos[i].ID + "/thumbnail"
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -132,8 +183,8 @@ func (h *PhotosHandler) GetDetail(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	photo.URL = "/api/photos/" + photo.ID + "/file"
-	photo.ThumbnailURL = "/api/photos/" + photo.ID + "/thumbnail"
+	photo.URL = "/api/media/" + photo.ID + "/file"
+	photo.ThumbnailURL = "/api/media/" + photo.ID + "/thumbnail"
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(photo)

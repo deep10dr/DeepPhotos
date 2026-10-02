@@ -4,6 +4,7 @@
 	import { appState } from '$lib/state.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import TopHeader from '$lib/components/TopHeader.svelte';
+	import NotificationToast from '$lib/components/NotificationToast.svelte';
 
 	let { children } = $props();
 	let ready = $state(false);
@@ -53,5 +54,8 @@
 			{@render children?.()}
 		</main>
 	</div>
+
+	<!-- Reusable Notification Toast Container -->
+	<NotificationToast />
 </div>
 {/if}
