@@ -7,7 +7,7 @@
 [![Tailwind CSS](https://img.shields.io/badge/Styling-Tailwind_CSS_v4-38BDF8?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg?style=for-the-badge)](LICENSE)
 
-**DeepPhotos** is a private, self-hosted photo, video, and document manager built as a privacy-focused Google Photos alternative. You own the database and the original files. It provides a media timeline, albums, memory collections, a passcode-protected vault, a recycle bin, multi-select batch actions, user administration, and automatic WebP thumbnails.
+**DeepPhotos** is a fully self-hosted, lightweight, and powerful photo, video, and document manager. It runs entirely on your own hardware, so you own the database and the original files. It provides a media timeline, albums, memory collections, a passcode-protected vault, a recycle bin, multi-select batch actions, user administration, and automatic WebP thumbnails.
 
 ---
 
@@ -34,13 +34,12 @@
 
 ## Why DeepPhotos?
 
-Commercial photo services (Google Photos, iCloud, Amazon Photos) impose storage limits, lock you into subscriptions, and process your private photos on their servers.
+Your photos, videos, and documents should stay on infrastructure you control. DeepPhotos is built to be simple to run and quick to use, without giving up the features you expect from a modern media library.
 
-DeepPhotos gives you:
-
-* **Privacy & ownership** — your metadata lives in a local SQLite file (`photos.db`) and your original, uncompressed files live in your own MinIO bucket (or on local disk). No third-party tracking, no mandatory subscription.
-* **Fast metadata queries** — SQLite runs in Write-Ahead Logging (WAL) mode with indexes on the columns the gallery filters by (type, deleted state, owner, date, vault folder, favorite).
-* **Decoupled architecture** — a lightweight Go REST API paired with a reactive Svelte 5 web client.
+* **Fully self-hosted** — everything runs on your own machine or server. Your metadata lives in a local SQLite file (`photos.db`) and your original, uncompressed files live in your own MinIO bucket (or on local disk). No external services, no third-party tracking, no accounts to create elsewhere.
+* **Lightweight** — a single Go backend binary with an embedded, CGo-free SQLite database and no separate database server. The full stack starts with one Docker Compose command, or runs locally with one script.
+* **Powerful** — albums, memories, a passcode-protected vault, a recycle bin, batch actions, role-based user management, audit logs, and automatic WebP thumbnails, all behind a documented REST API.
+* **Fast** — SQLite runs in Write-Ahead Logging (WAL) mode with indexes on the columns the gallery filters by (type, deleted state, owner, date, vault folder, favorite), and the Svelte 5 client updates only what changes.
 * **Broad media support** — images, videos (`MP4`, `MOV`, `WebM`, `MKV`, `AVI`), and documents (`PDF`, `DOC`/`DOCX`, `TXT`, `ZIP`).
 
 ---
