@@ -1,4 +1,4 @@
-# 📸 DeepPhotos — Self-Hosted Personal Media Cloud
+# DeepPhotos — Self-Hosted Personal Media Cloud
 
 [![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?style=for-the-badge&logo=go)](https://golang.org)
 [![Svelte Version](https://img.shields.io/badge/Svelte-5.0_(Runes)-FF3E00?style=for-the-badge&logo=svelte)](https://svelte.dev)
@@ -11,28 +11,28 @@
 
 ---
 
-## 🧭 Table of Contents
-1. [Why DeepPhotos?](#-why-deepphotos)
-2. [Features](#-features)
-3. [Quick Start](#-quick-start)
-4. [Architecture & Tech Stack](#-architecture--tech-stack)
-5. [Project Structure](#-project-structure)
-6. [Configuration](#-configuration)
-7. [Authentication & Roles](#-authentication--roles)
-8. [How It Works (Data Flows)](#-how-it-works-data-flows)
-9. [Object Storage Layout](#-object-storage-layout)
-10. [Page-to-API Mapping](#-page-to-api-mapping)
-11. [REST API Reference](#-rest-api-reference)
-12. [Development](#-development)
-13. [Production Deployment](#-production-deployment)
-14. [Security Checklist](#-security-checklist)
-15. [Troubleshooting](#-troubleshooting)
-16. [Contributing](#-contributing)
-17. [License](#-license)
+## Table of Contents
+1. [Why DeepPhotos?](#why-deepphotos)
+2. [Features](#features)
+3. [Quick Start](#quick-start)
+4. [Architecture & Tech Stack](#architecture--tech-stack)
+5. [Project Structure](#project-structure)
+6. [Configuration](#configuration)
+7. [Authentication & Roles](#authentication--roles)
+8. [How It Works (Data Flows)](#how-it-works-data-flows)
+9. [Object Storage Layout](#object-storage-layout)
+10. [Page-to-API Mapping](#page-to-api-mapping)
+11. [REST API Reference](#rest-api-reference)
+12. [Development](#development)
+13. [Production Deployment](#production-deployment)
+14. [Security Checklist](#security-checklist)
+15. [Troubleshooting](#troubleshooting)
+16. [Contributing](#contributing)
+17. [License](#license)
 
 ---
 
-## ❓ Why DeepPhotos?
+## Why DeepPhotos?
 
 Commercial photo services (Google Photos, iCloud, Amazon Photos) impose storage limits, lock you into subscriptions, and process your private photos on their servers.
 
@@ -45,7 +45,7 @@ DeepPhotos gives you:
 
 ---
 
-## ✨ Features
+## Features
 
 | Area | What you get |
 |---|---|
@@ -62,7 +62,7 @@ DeepPhotos gives you:
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Option A — Docker (recommended)
 
@@ -90,7 +90,7 @@ Then open:
 | REST API | http://localhost:8080 |
 | MinIO console | http://localhost:9001 |
 
-Sign in with the admin account from your `.env` (default: `admin@deepphotos.local` / `deepphotos2026`). **Change these before exposing the app to anyone** — see the [Security Checklist](#-security-checklist).
+Sign in with the admin account from your `.env` (default: `admin@deepphotos.local` / `deepphotos2026`). **Change these before exposing the app to anyone** — see the [Security Checklist](#security-checklist).
 
 Stop or restart the stack:
 
@@ -115,7 +115,7 @@ The script starts MinIO through Docker when it is available, runs the Go backend
 
 ---
 
-## 🛠️ Architecture & Tech Stack
+## Architecture & Tech Stack
 
 ```text
  ┌─────────────────────────────────────────────────────────────────┐
@@ -149,7 +149,7 @@ The script starts MinIO through Docker when it is available, runs the Go backend
 
 ---
 
-## 🗂️ Project Structure
+## Project Structure
 
 ```text
 deepphotos/
@@ -191,7 +191,7 @@ Each script exists in `scripts/mac-linux/` (`.sh`) and `scripts/windows/` (`.bat
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 The backend reads environment variables and falls back to the defaults below. Copy `.env.template` to `.env` to override them.
 
@@ -212,7 +212,7 @@ The backend reads environment variables and falls back to the defaults below. Co
 
 ---
 
-## 🔐 Authentication & Roles
+## Authentication & Roles
 
 * `POST /api/auth/login` returns a JWT. Send it as `Authorization: Bearer <token>` on every other request.
 * Browsers cannot attach headers to `<img>` and `<video>` tags, so media endpoints also accept `?token=<jwt>`.
@@ -222,7 +222,7 @@ The backend reads environment variables and falls back to the defaults below. Co
 
 ---
 
-## 🔄 How It Works (Data Flows)
+## How It Works (Data Flows)
 
 ### 1. Ingestion & upload
 ```text
@@ -246,7 +246,7 @@ Items first move to the **Bin** (soft delete) and can be restored. Permanently d
 
 ---
 
-## 🔒 Object Storage Layout
+## Object Storage Layout
 
 Media is partitioned by three levels of UUIDv4 folders to avoid very large directories:
 
@@ -270,7 +270,7 @@ When MinIO is unreachable, the backend stores objects on local disk under `data/
 
 ---
 
-## 🗺️ Page-to-API Mapping
+## Page-to-API Mapping
 
 Which backend endpoints each frontend view calls:
 
@@ -288,7 +288,7 @@ Which backend endpoints each frontend view calls:
 
 ---
 
-## 🌐 REST API Reference
+## REST API Reference
 
 All routes except `/api/health` and `/api/auth/login` require authentication.
 
@@ -332,7 +332,7 @@ Convenience aliases: `GET /api/gallery`, `GET /api/documents`, and `GET /api/pho
 
 ---
 
-## 🧑‍💻 Development
+## Development
 
 ```bash
 # Terminal 1 — backend (http://localhost:8080)
@@ -360,7 +360,7 @@ docker compose -f docker/docker-compose.yaml up -d minio
 
 ---
 
-## 🚢 Production Deployment
+## Production Deployment
 
 ### With Docker Compose
 
@@ -391,7 +391,7 @@ Put the app behind a reverse proxy that terminates HTTPS, and set `VITE_API_BASE
 
 ---
 
-## 🛡️ Security Checklist
+## Security Checklist
 
 Before exposing DeepPhotos beyond your own machine:
 
@@ -404,7 +404,7 @@ Before exposing DeepPhotos beyond your own machine:
 
 ---
 
-## 🩺 Troubleshooting
+## Troubleshooting
 
 | Symptom | Likely cause and fix |
 |---|---|
@@ -416,7 +416,7 @@ Before exposing DeepPhotos beyond your own machine:
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository and create a branch from `dev`.
 2. Keep changes focused and run `npm run check` for frontend changes.
@@ -424,6 +424,6 @@ Before exposing DeepPhotos beyond your own machine:
 
 ---
 
-## 📜 License
+## License
 
 This project is open-source under the [Apache License 2.0](LICENSE).
