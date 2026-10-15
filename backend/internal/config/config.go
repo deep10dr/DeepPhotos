@@ -1,7 +1,9 @@
 package config
 
 import (
+	"log"
 	"os"
+	"strings"
 )
 
 type Config struct {
@@ -17,7 +19,38 @@ type Config struct {
 	AdminPassword  string
 }
 
+// loadEnvFile searches for a .env file and sets variables in the process environment if not already set.
+func loadEnvFile() {
+	paths := []string{".env", "../.env", "../../.env", "backend/.env"}
+	for _, p := range paths {
+		data, err := os.ReadFile(p)
+		if err != nil {
+			continue
+		}
+		lines := strings.Split(string(data), "\n")
+		for _, line := range lines {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "#") {
+				continue
+			}
+			parts := strings.SplitN(line, "=", 2)
+			if len(parts) == 2 {
+				k := strings.TrimSpace(parts[0])
+				v := strings.TrimSpace(parts[1])
+				v = strings.Trim(v, `"'`)
+				if _, set := os.LookupEnv(k); !set {
+					os.Setenv(k, v)
+				}
+			}
+		}
+		log.Printf("Loaded environment settings from %s", p)
+		break
+	}
+}
+
 func LoadConfig() *Config {
+	loadEnvFile()
+
 	return &Config{
 		Port:           getEnv("PORT", "8080"),
 		DBPath:         getEnv("DB_PATH", "data/photos.db"),

@@ -7,6 +7,13 @@ set -e
 ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
 ENABLE_DEBUG="${DEBUG:-0}"
 
+# Load .env if present
+if [ -f "$ROOT/.env" ]; then
+    set -a
+    . "$ROOT/.env"
+    set +a
+fi
+
 if [ "$1" = "--debug" ] || [ "$1" = "-d" ]; then
     ENABLE_DEBUG=1
 fi

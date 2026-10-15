@@ -207,7 +207,6 @@ The backend reads environment variables and falls back to the defaults below. Co
 | `ADMIN_EMAIL` | `admin@deepphotos.local` | Email of the seeded administrator. |
 | `ADMIN_PASSWORD` | `deepphotos2026` | Password of the seeded administrator. **Change in production.** |
 | `VITE_API_BASE_URL` | `http://localhost:8080` | Frontend: base URL of the backend API. |
-| `VITE_DEV_USERNAME` / `VITE_DEV_PASSWORD` | — | Frontend: development convenience credentials used in `.env.template`. Do not set these in production. |
 
 ---
 
@@ -398,7 +397,6 @@ Before exposing DeepPhotos beyond your own machine:
 - [ ] Change `ADMIN_EMAIL` and `ADMIN_PASSWORD`.
 - [ ] Change `MINIO_ACCESS_KEY` and `MINIO_SECRET_KEY`, and do not publish MinIO ports `9000`/`9001` publicly.
 - [ ] Serve everything over HTTPS.
-- [ ] Remove `VITE_DEV_USERNAME` and `VITE_DEV_PASSWORD` from production builds.
 - [ ] Keep regular backups of the `minio_data` and `sqlite_data` volumes.
 
 ---
