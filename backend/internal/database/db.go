@@ -153,31 +153,46 @@ func seedDefaultAdmin(db *sql.DB, email, password string) error {
 		return err
 	}
 
+	// 1. Check if admin with this exact email already exists
 	var count int
 	err = db.QueryRow("SELECT COUNT(*) FROM users WHERE email = ?", email).Scan(&count)
 	if err != nil {
 		return err
 	}
 
-	if count == 0 {
-		query := `
-		INSERT INTO users (id, name, email, password, role, avatar, status, last_login)
-		VALUES ('usr_admin_1', 'Deepak (Admin)', ?, ?, 'Administrator', 
-		'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', 'Active', 'Just now')
-		`
-		_, err = db.Exec(query, email, string(hashed))
-		if err != nil {
-			return err
-		}
-		log.Printf("Seeded default admin account: %s", email)
-	} else {
-		query := `UPDATE users SET password = ? WHERE email = ?`
+	if count > 0 {
+		query := `UPDATE users SET password = ?, role = 'Administrator', status = 'Active' WHERE email = ?`
 		_, err = db.Exec(query, string(hashed), email)
 		if err != nil {
 			return err
 		}
 		log.Printf("Updated admin account credentials for: %s", email)
+		return nil
 	}
 
+	// 2. Check if primary admin account exists by id 'usr_admin_1' or role 'Administrator'
+	var existingAdminID string
+	err = db.QueryRow("SELECT id FROM users WHERE id = 'usr_admin_1' OR role = 'Administrator' LIMIT 1").Scan(&existingAdminID)
+	if err == nil && existingAdminID != "" {
+		query := `UPDATE users SET email = ?, password = ?, role = 'Administrator', status = 'Active' WHERE id = ?`
+		_, err = db.Exec(query, email, string(hashed), existingAdminID)
+		if err != nil {
+			return err
+		}
+		log.Printf("Synchronized admin account (%s) with env credentials: %s", existingAdminID, email)
+		return nil
+	}
+
+	// 3. Otherwise, insert new default admin
+	query := `
+	INSERT INTO users (id, name, email, password, role, avatar, status, last_login)
+	VALUES ('usr_admin_1', 'Deepak (Admin)', ?, ?, 'Administrator', 
+	'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80', 'Active', 'Just now')
+	`
+	_, err = db.Exec(query, email, string(hashed))
+	if err != nil {
+		return err
+	}
+	log.Printf("Seeded default admin account: %s", email)
 	return nil
 }

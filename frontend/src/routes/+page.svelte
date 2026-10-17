@@ -1,17 +1,23 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { appState } from '$lib/state.svelte';
-	import { Lock, User, Eye, EyeOff, ArrowRight, Loader2, Image as ImageIcon, Cloud, Sparkles, FolderLock } from 'lucide-svelte';
-
-	// Pre-fill from env for development by default
-	const devUsername = import.meta.env.VITE_DEV_USERNAME || 'admin@deepphotos.local';
-	const devPassword = import.meta.env.VITE_DEV_PASSWORD || 'deepphotos2026';
+	import { Lock, User, Eye, EyeOff, ArrowRight, Loader2, Image as ImageIcon, Cloud, Sparkles, FolderLock, AlertCircle } from 'lucide-svelte';
 
 	// Svelte 5 state runes
-	let username = $state(devUsername);
-	let password = $state(devPassword);
+	let username = $state('');
+	let password = $state('');
 	let showPassword = $state(false);
 	let isLoading = $state(false);
+	let errorMessage = $state('');
+
+	onMount(() => {
+		// If user is already authenticated with a valid token, forward to gallery
+		const token = localStorage.getItem('deepphotos_token');
+		if (token) {
+			goto('/gallery');
+		}
+	});
 
 	// Minimal clean photo cards for left side display
 	const features = [
@@ -22,12 +28,17 @@
 
 	async function handleLogin(e: Event) {
 		e.preventDefault();
+		errorMessage = '';
 		isLoading = true;
 
-		await appState.login(username, password);
+		const success = await appState.login(username, password);
 
 		isLoading = false;
-		goto('/gallery');
+		if (success) {
+			goto('/gallery');
+		} else {
+			errorMessage = appState.authError || 'Invalid email or password. Please try again.';
+		}
 	}
 </script>
 
@@ -107,19 +118,26 @@
 					<p class="text-sm text-slate-500 dark:text-slate-400 mt-2">Enter your credentials to access your vault</p>
 				</div>
 
+				{#if errorMessage}
+					<div class="mb-6 p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-semibold flex items-center gap-2.5 shadow-sm">
+						<AlertCircle class="w-4 h-4 shrink-0 text-rose-500" />
+						<span>{errorMessage}</span>
+					</div>
+				{/if}
+
 				<form onsubmit={handleLogin} class="space-y-5">
 
-					<!-- Username Field -->
+					<!-- Email Field -->
 					<div class="space-y-2">
 						<label for="username" class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider flex items-center gap-2">
 							<User class="w-3.5 h-3.5 text-sky-500" />
-							<span>Username</span>
+							<span>Email Address</span>
 						</label>
 						<input
 							id="username"
-							type="text"
+							type="email"
 							bind:value={username}
-							placeholder="admin@deepphotos.local"
+							placeholder="admin@example.com"
 							class="w-full h-12 px-4 text-sm rounded-xl bg-slate-50/50 dark:bg-slate-950/50 backdrop-blur-sm border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-600 focus:outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/10 transition-all"
 							required
 						/>

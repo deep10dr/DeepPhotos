@@ -21,14 +21,15 @@ export interface LoginLog {
 }
 
 export class AppState {
-  isAuthenticated = $state(true);
+  isAuthenticated = $state(false);
+  authError = $state('');
   theme = $state<'light' | 'dark'>('light');
   apiBaseUrl = $state(import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080');
   uploadVersion = $state(0);
   
   user = $state({
-    name: 'Deepak (Admin)',
-    email: 'admin@deepphotos.local',
+    name: 'Administrator',
+    email: '',
     role: 'Administrator',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
     joinedDate: 'August 2026',
@@ -76,8 +77,14 @@ export class AppState {
   }
 
   async login(email?: string, password?: string): Promise<boolean> {
-    const targetEmail = email || this.user.email;
-    const targetPassword = password || 'deepphotos2026';
+    this.authError = '';
+    const targetEmail = (email || '').trim();
+    const targetPassword = password || '';
+
+    if (!targetEmail || !targetPassword) {
+      this.authError = 'Please enter both email and password.';
+      return false;
+    }
 
     try {
       const res = await fetch(`${this.apiBaseUrl}/api/auth/login`, {
@@ -94,19 +101,24 @@ export class AppState {
           }
         }
         if (data.user) {
-          this.user.name = data.user.name;
-          this.user.email = data.user.email;
-          this.user.role = data.user.role;
+          this.user.name = data.user.name || this.user.name;
+          this.user.email = data.user.email || targetEmail;
+          this.user.role = data.user.role || this.user.role;
         }
         this.isAuthenticated = true;
         return true;
       }
-    } catch (e) {
-      console.warn('Backend API connection warning. Falling back to local session:', e);
-    }
 
-    this.isAuthenticated = true;
-    return true;
+      const errorData = await res.json().catch(() => ({}));
+      this.authError = errorData.error || 'Invalid email or password.';
+      this.isAuthenticated = false;
+      return false;
+    } catch (e) {
+      console.error('Backend API connection error:', e);
+      this.authError = 'Unable to connect to backend server. Please verify backend is running.';
+      this.isAuthenticated = false;
+      return false;
+    }
   }
 
   logout() {
@@ -115,6 +127,8 @@ export class AppState {
     }
     clearAllCache();
     this.isAuthenticated = false;
+    this.user.email = '';
+    this.authError = '';
   }
 
   toggleSidebar() {

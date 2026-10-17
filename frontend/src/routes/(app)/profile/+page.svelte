@@ -70,6 +70,8 @@
 	}
 
 	onMount(() => {
+		if (appState.user.name) nameInput = appState.user.name;
+		if (appState.user.email) emailInput = appState.user.email;
 		if (appState.user.role === 'Administrator') {
 			fetchUsers();
 			fetchAuditLogs();
